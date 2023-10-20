@@ -1,0 +1,36 @@
+
+echo "Starting up X11 session manager..."
+
+if [ -x /etc/rc.d/rc.4.local ]; then
+  exec /bin/bash /etc/rc.d/rc.4.local
+fi
+
+if [ -x /usr/bin/gdm ]; then
+  exec /usr/bin/gdm -nodaemon
+fi
+
+if [ -x /usr/sbin/gdm ]; then
+  exec /usr/sbin/gdm -nodaemon
+fi
+
+if [ -x /opt/kde/bin/kdm ]; then
+  exec /opt/kde/bin/kdm -nodaemon
+elif [ -x /usr/bin/kdm ]; then
+  exec /usr/bin/kdm -nodaemon
+fi
+
+if [ -x /usr/bin/sddm ]; then
+  exec /usr/bin/sddm
+fi
+
+if [ -x /usr/bin/xdm ]; then
+  exec /usr/bin/xdm -nodaemon -config /etc/X11/xdm/liveslak-xdm/xdm-config
+elif [ -x /usr/X11R6/bin/xdm ]; then
+  exec /usr/X11R6/bin/xdm -nodaemon -config /etc/X11/xdm/liveslak-xdm/xdm-config
+fi
+
+# error
+echo
+echo "Hey, you don't have SDDM, KDM, GDM, or XDM.  Can't use runlevel 4 without"
+echo "one of those installed."
+sleep 30

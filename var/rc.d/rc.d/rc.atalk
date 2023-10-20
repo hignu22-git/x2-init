@@ -1,0 +1,58 @@
+#!/bin/sh
+# Start/stop/restart the netatalk daemon.
+
+netatalk_start() {
+  if [ -x /usr/sbin/netatalk ]; then
+
+    LINES="$(grep "^[^;]" /etc/netatalk/afp.conf | wc -l)"
+    if [ "$LINES" -lt "2" ]; then
+      echo "netatalk is not configured.... exiting."
+      exit
+    fi 
+
+    echo "Starting netatalk:  /usr/sbin/netatalk"
+    /usr/sbin/netatalk
+  fi
+}
+
+# Stop netatalk
+netatalk_stop() {
+  echo "Stopping netatalk."
+  /usr/bin/pkill --ns $$ -f "^/usr/sbin/netatalk" 2> /dev/null
+}
+
+# Restart netatalk
+netatalk_restart() {
+  netatalk_stop
+  sleep 1
+  netatalk_start
+}
+
+# Check if netatalk is running
+netatalk_status() {
+  PID="$(/usr/bin/pgrep --ns $$ -f "^/usr/sbin/netatalk" 2> /dev/null)"
+  if [ $PID ]; then
+    echo "netatalk is running.  PID: $PID"
+  else
+    echo "netatalk is stopped."
+    exit 1
+  fi
+}
+
+case "$1" in
+'start')
+  netatalk_start
+  ;;
+'stop')
+  netatalk_stop
+  ;;
+'restart')
+  netatalk_restart
+  ;;
+'status')
+  netatalk_status
+  ;;
+*)
+  echo "usage $0 start|stop|restart|status"
+esac
+

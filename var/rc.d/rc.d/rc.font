@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# This selects your default screen font from among the ones in
+# /usr/share/kbd/consolefonts.
+#
+#setfont -v
+
+# Use Terminus font to work better with the Unicode-enabled console
+# (configured in /etc/lilo.conf)
+setfont -v ter-120b
