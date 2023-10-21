@@ -1558,7 +1558,7 @@ read_inittab(void) {
 					if (strlen(file_entry->d_name) < 5 || strcmp(file_entry->d_name + strlen(file_entry->d_name) - 4, ".tab"))
 						continue;
 					/* initialize filename */
-					memset(f_name, 0, sizeof(char) * 272);
+					memset(f_name, 0, sizeof(char ) * 272);
 					snprintf(f_name, 272, "/etc/rc.d/%s", file_entry->d_name);
 					initlog(L_VB, "Reading: %s", f_name);
 					/* read file in rc.d only one entry per file */
@@ -2958,15 +2958,14 @@ static void process_signals()
 \*	THE MAIN LOOP */
 /******************\
 \******************/
-static void init_main(void)
-{
+static void 
+init_main(void) {
 	CHILD *ch;
 	struct sigaction sa;
 	sigset_t sgt;
 	int f, st;
 
-	if (!reload)
-	{
+	if (!reload) {
 #if INITDEBUG
 		/* Fork so we can debug the init process.*/
 		if ((f = fork()) > 0)
@@ -2984,13 +2983,10 @@ static void init_main(void)
 is pressed, and that we want to handle keyboard signals. */
 #ifdef __linux__
 		init_reboot(BMAGIC_SOFT);
-		if ((f = open(VT_MASTER, O_RDWR | O_NOCTTY)) >= 0)
-		{
+		if ((f = open(VT_MASTER, O_RDWR | O_NOCTTY)) >= 0) {
 			(void)ioctl(f, KDSIGACCEPT, SIGWINCH);
 			close(f);
-		}
-		else
-			(void)ioctl(0, KDSIGACCEPT, SIGWINCH);
+		} else (void)ioctl(0, KDSIGACCEPT, SIGWINCH);
 #endif
 		/* Ignore all signals.*/
 		for (f = 1; f <= NSIG; f++)
@@ -3010,8 +3006,7 @@ is pressed, and that we want to handle keyboard signals. */
 	SETSIG(sa, SIGSEGV, (void (*)(int))segv_handler, SA_RESTART);
 	console_init(); /* /dev/null ;/dev/console - start */
 
-	if (!reload)
-	{
+	if (!reload) {
 		int fd; /* Close whatever files are open, and reset the console. */
 		close(0);
 		close(1);
@@ -3026,12 +3021,10 @@ is pressed, and that we want to handle keyboard signals. */
 		/*	Say hello to the world */
 		initlog(L_CO, bootmsg, "booting");
 		/*	See if we have to start an emergency shell. */
-		if (emerg_shell)
-		{
+		if (emerg_shell) {
 			pid_t rc;
 			SETSIG(sa, SIGCHLD, SIG_DFL, SA_RESTART);
-			if (spawn(&ch_emerg, &f) > 0)
-			{
+			if (spawn(&ch_emerg, &f) > 0) {
 				while ((rc = wait(&st)) != f)
 					if (rc < 0 && errno == ECHILD)
 						break;
@@ -3041,74 +3034,52 @@ is pressed, and that we want to handle keyboard signals. */
 		runlevel = '#';
 		read_inittab();
 	}
-	else
-	{
-		/*
-		 *	Restart: unblock signals and let the show go on
-		 */
+	else {
+		/* Restart: unblock signals and let the show go on */
 		initlog(L_CO, bootmsg, "reloading");
 		sigfillset(&sgt);
 		sigprocmask(SIG_UNBLOCK, &sgt, NULL);
 
-		/*
-		 *	Set default PATH variable.
-		 */
+		/* Set default PATH variable. */
 		setenv("PATH", PATH_DEFAULT, 0 /* Don't overwrite */);
-	}
-	start_if_needed();
+	} start_if_needed();
 
-	while (1)
-	{
-
+	while (1) {
 		/* See if we need to make the boot transitions. */
 		boot_transitions();
 		INITDBG(L_VB, "init_main: waiting..");
-
 		/* Check if there are processes to be waited on. */
 		for (ch = family; ch; ch = ch->next)
 			if ((ch->flags & RUNNING) && ch->action != BOOT)
 				break;
-
 #if CHANGE_WAIT
 		/* Wait until we get hit by some signal. */
-		while (ch != NULL && got_signals == 0)
-		{
-			if (ISMEMBER(got_signals, SIGHUP))
-			{
+		while (ch != NULL && got_signals == 0) {
+			if (ISMEMBER(got_signals, SIGHUP)) {
 				/* See if there are processes to be waited on. */
 				for (ch = family; ch; ch = ch->next)
 					if (ch->flags & WAITING)
 						break;
 			}
-			if (ch != NULL)
-				check_init_fifo();
+			if (ch != NULL) check_init_fifo();
 		}
 #else  /* CHANGE_WAIT */
 		if (ch != NULL && got_signals == 0)
 			check_init_fifo();
 #endif /* CHANGE_WAIT */
-
 		/* Check the 'failing' flags */
 		fail_check();
-
 		/* Process any signals. */
 		process_signals();
-
 		/* See what we need to start up (again) */
 		start_if_needed();
-	}
-	/*NOTREACHED*/
+	} /*NOTREACHED*/
 }
-
-/*
- * Tell the user about the syntax we expect.
- */
-static void usage(char *s)
-{
+/* Tell the user about the syntax we expect. */
+static void usage(char *s){
 	fprintf(stderr, "Usage: %s {-e VAR[=VAL] | [-t SECONDS] {0|1|2|3|4|5|6|S|s|Q|q|A|a|B|b|C|c|U|u}}\n", s);
 	exit(1);
 }
-
 static int
 x2init(char *progname,
 	   int argc,

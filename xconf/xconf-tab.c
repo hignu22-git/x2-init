@@ -31,32 +31,12 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#ifdef WITH_SELINUX
-#  include <selinux/selinux.h>
-#endif
-#ifdef __FreeBSD__
-extern char **environ;
-#endif
-
-#ifdef __i386__
-#  ifdef __GLIBC__
-     /* GNU libc 2.x */
-#    define STACK_DEBUG 1
-#    if (__GLIBC__ == 2 && __GLIBC_MINOR__ == 0)
-       /* Only glibc 2.0 needs this */
-#      include <sigcontext.h>
-#    elif ( __GLIBC__ > 2) && ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))
-#      include <bits/sigcontext.h>
-#    endif
-#  endif
-#endif
-
-#include "../init.h"
-#include "../initreq.h"
-#include "../paths.h"
-#include "../reboot.h"
-#include "../runlevellog.h"
-#include "../set.h"
+#include "../src/init.h"
+#include "../src/initreq.h"
+#include "../src/paths.h"
+#include "../src/reboot.h"
+#include "../src/runlevellog.h"
+#include "../src/set.h"
 
 #ifndef SIGPWR
 #  define SIGPWR SIGUSR2
@@ -73,14 +53,15 @@ extern char **environ;
 /* MAIN FUNCTION */ 
 int 
 main( int argc,
- 	char * argv[] )
+ 	char **argv )
 {
 
-	FILE *fp ;
-	char* dmStr ;
+	FILE *fp  ; 		/* pach/to/inittab */
+	char* dmStr   ; 	/* value argv [ 2 ] */
+	char  gtStr[255] ; 	/* string for input in the utility */
 
 	if (!strcmp(argv[1], "--change-dm")){
-		if (!strcmp(argv[2], "/usr/bin/sddm")){
+		if (!strcmp(argv[2], "/usr/bin/sddm") || (!strcmp(argv[2], "sddm"))){
 			dmStr = " exec /usr/bin/sddm ";
 		}
 		else if(!strcmp(argv[2], "/opt/kde/bin/kdm")) {
@@ -96,16 +77,21 @@ main( int argc,
 			dmStr = "/usr/X11R6/bin/xdm -nodaemon -config /etc/X11/xdm/liveslak-xdm/xdm-config" ;
 		}
 		/*2*/
-		fp = fopen(
-			RUNLEVEL_DEF_DM ,
-			w
-		);
-		fgets(dmStr, fp);
-	}else if (!strcmp(argv[1], "--help" || !strcmp(argv[1], "-h") ) {
+		fp = fopen( RUNLEVEL_DEF_DM ,
+			"w" );
+		fputs(dmStr, fp);
+		fclose(fp);
+	}else if (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h") ) {
 		printf("Made By hignu22, Andre Bobrovskiy <hianon228@yandex.fr> ");
-	}
+	}/*else if (!strcmp(argv[1], "--set-mode") || !strcmp(argv[1], "-S")){
+
+	}*/
+
     return 0;
 }
+
+
+
 
 
 
