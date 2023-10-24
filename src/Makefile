@@ -1,4 +1,4 @@
-PPFLAGS =
+CPPFLAGS =
 CFLAGS  ?= -O2
 override CFLAGS += -ansi -fomit-frame-pointer -fstack-protector-strong -W -Wall -Wunreachable-code -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -D_XOPEN_SOURCE -D_GNU_SOURCE -DVERSION=\"$(VERSION)\"
 override CFLAGS += $(shell getconf LFS_CFLAGS)
@@ -198,7 +198,7 @@ install:	all
 			$(INSTALL_EXEC) $$i $(ROOT)/usr/bin/ ; \
 		done
 		# $(INSTALL_DIR) $(ROOT)/etc/
-		$(INSTALL_DIR) $(ROOT)/etc/rc.d
+		$(INSTALL_DIR) $(ROOT)/etc/inittab.d
 		# $(INSTALL_EXEC) ../doc/initscript.sample $(ROOT)/etc/
 		ln -sf halt $(ROOT)/sbin/reboot
 		ln -sf halt $(ROOT)/sbin/poweroff

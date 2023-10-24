@@ -1518,8 +1518,8 @@ read_inittab(void) {
 	int talk;				   	/* Talk to the user */
 	int done = -1;			   	/* Ready yet? , 2 level : -1 nothing done,
 		0 inittab done, 1 inittab and inittab.d done */
-	DIR *tabdir = NULL;		   	/* the INITTAB.D dir */
-	struct dirent *file_entry; 	/* inittab.d entry */
+	DIR *tabdir = NULL;		   	/* the rc.d dir */
+	struct dirent *file_entry; 	/* rc.d entry */
 	char f_name[272];		   	/* size d_name + strlen /etc/inittad.d/ */
 
 #if DEBUG
@@ -1549,34 +1549,28 @@ read_inittab(void) {
 					continue;
 			}
 		} else if (done == 0) {
-			/* parse /etc/inittab.d and read all .tab files */
+			/* parse /etc/rc.d and read all .tab files */
 			if (tabdir != NULL) {
 				if ((file_entry = readdir(tabdir)) != NULL) {
 					/* ignore files not like *.tab */
-					if (!strcmp(file_entry->d_name, ".") || !strcmp(file_entry->d_name, ".."))
-						continue;
-					if (strlen(file_entry->d_name) < 5 || strcmp(file_entry->d_name + strlen(file_entry->d_name) - 4, ".tab"))
-						continue;
+					if (!strcmp(file_entry->d_name, ".") || !strcmp(file_entry->d_name, "..")) continue;
+					if (strlen(file_entry->d_name) < 5 || 
+						strcmp(file_entry->d_name + strlen(file_entry->d_name) - 4, ".tab"))   continue;
 					/* initialize filename */
 					memset(f_name, 0, sizeof(char ) * 272);
 					snprintf(f_name, 272, "/etc/rc.d/%s", file_entry->d_name);
 					initlog(L_VB, "Reading: %s", f_name);
 					/* read file in rc.d only one entry per file */
-					if ((fp_tab = fopen(f_name, "r")) == NULL)
-						continue;
-					
+					if ((fp_tab = fopen(f_name, "r") ) == NULL)  continue;
 					/* read the file while the line contain comment */
 					while (fgets(buf, sizeof(buf), fp_tab) != NULL) {
 						for (p = buf; *p == ' ' || *p == '\t'; p++) ;
-						if (*p != '#' && *p != '\n')
-							break;
+						if (*p != '#' && *p != '\n') break;
 					}
 					fclose(fp_tab);
 					/* do some checks */
-					if (strlen(p) == 0)
-						continue;
-				} /* end of readdir, all is done */
-				else {
+					if (strlen(p) == 0) continue;
+				} /* end of readdir, all is done */ else {
 					done = 1;
 					continue;
 				}
@@ -1587,8 +1581,7 @@ read_inittab(void) {
 		} /* end of if ( done == 0 ) */ lineNo++;
 		/* Skip comments and empty lines */
 		for (p = buf; *p == ' ' || *p == '\t'; p++) ;
-		if (*p == '#' || *p == '\n')
-			continue;
+		if (*p == '#' || *p == '\n')	continue;
 		/* Decode the fields */
 		id = strsep(&p, ":");
 		rlevel = strsep(&p, ":");
@@ -1621,46 +1614,33 @@ read_inittab(void) {
 		}
 		/*	Decode the "action" field */
 		actionNo = -1;
-		for (f = 0; actions[f].name; f++)
+		for (f = 0; actions[f].name; f++) {
 			if (strcasecmp(action, actions[f].name) == 0) {
 				actionNo = actions[f].act;
 				break;
 			}
+		}
 		if (actionNo == -1) {
-			initlog(L_VB, "%s[%d]: %s: unknown action field",
-					INITTAB, lineNo, action);
+			initlog(L_VB, "%s[%d]: %s: unknown action field", INITTAB, lineNo, action);
 			continue;
 		}
-
 		/*	See if the id field is unique */
 		for (old = newFamily; old; old = old->next) {
 			if (strcmp(old->id, id) == 0 && strcmp(id, "~~")) {
-				initlog(L_VB, "%s[%d]: duplicate ID field \"%s\"",
-						INITTAB, lineNo, id);
+				initlog(L_VB, "%s[%d]: duplicate ID field \"%s\"", INITTAB, lineNo, id);
 				break;
 			}
-		}
-		if (old)
-			continue;
-
-		/*
-		 *	Allocate a CHILD structure
-		 */
+		}	if (old) continue;
+		/*	Allocate a CHILD structure */
 		ch = imalloc(sizeof(CHILD));
-
-		/*
-		 *	And fill it in.
-		 */
+		/* And fill it in. */
 		ch->action = actionNo;
 		strncpy(ch->id, id, sizeof(utproto.ut_id) + 1); /* Hack for different libs. */
 		strncpy(ch->process, process, sizeof(ch->process) - 1);
-		if (rlevel[0])
-		{
-			for (f = 0; f < (int)sizeof(rlevel) - 1 && rlevel[f]; f++)
-			{
+		if (rlevel[0]) {
+			for (f = 0; f < (int)sizeof(rlevel) - 1 && rlevel[f]; f++) {
 				ch->rlevel[f] = rlevel[f];
-				if (ch->rlevel[f] == 's')
-					ch->rlevel[f] = 'S';
+				if (ch->rlevel[f] == 's') ch->rlevel[f] = 'S'  ;
 			}
 			strncpy(ch->rlevel, rlevel, sizeof(ch->rlevel) - 1);
 		}
