@@ -9,8 +9,8 @@
 #                                      13.37    2011-03-25      PJV
 #
 # Author:	Miquel van Smoorenburg, <miquels@drinkel.nl.mugnet.org>
-# Modified by:	Patrick J. Volkerding		, <volkerdi@slackware.com> 
-# 		Andre Bobrovskiy[hignu22] 	, < hianon228@ya.ru>
+# Modified by:	Patrick J. Volkerding		  , <volkerdi@slackware.com> 
+# 		        Andre Bobrovskiy[hignu22-git] , < hianon228@yandex.fr>
 #
 
 # These are the default runlevels in Slackware:

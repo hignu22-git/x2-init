@@ -1,27 +1,3 @@
-/*
- * init.h	Several defines and declarations to be
- *		included by all modules of the init program.
- *
- * Version:	@(#)init.h  2.85-5  02-Jul-2003  miquels@cistron.nl
- *
- * Copyright (C) 1998-2003 Miquel van Smoorenburg.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- *
- */
-
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -30,8 +6,7 @@
 #endif
 
 /* Standard configuration */
-#define CHANGE_WAIT 0			/* Change runlevel while
-					   waiting for a process to exit? */
+#define CHANGE_WAIT 0			/* Change runlevel while waiting for a process to exit? */
 /* Debug and test modes */
 #define DEBUG	   0			/* Debug code off */
 #define INITDEBUG  0			/* Fork at startup to debug init. */
@@ -89,17 +64,17 @@ void wall(const char *text, int remote);
 
 /* Information about a process in the in-core inittab */
 typedef struct _child_ {
-  int flags;			/* Status of this entry */
-  int exstat;			/* Exit status of process */
-  int pid;			/* Pid of this process */
-  time_t tm;			/* When respawned last */
-  int count;			/* Times respawned in the last 2 minutes */
-  char id[8];			/* Inittab id (must be unique) */
-  char rlevel[12];		/* run levels */
-  int action;			/* what to do (see list below) */
-  char process[128];		/* The command line */
-  struct _child_ *new;		/* New entry (after inittab re-read) */
-  struct _child_ *next;		/* For the linked list */
+    int flags;			/* Status of this entry */
+    int exstat;			/* Exit status of process */
+    int pid;			/* Pid of this process */
+    time_t tm;			/* When respawned last */
+    int count;			/* Times respawned in the last 2 minutes */
+    char id[8];			/* Inittab id (must be unique) */
+    char rlevel[12];		/* run levels */
+    int action;			/* what to do (see list below) */
+    char process[128];		/* The command line */
+    struct _child_ *new;		/* New entry (after inittab re-read) */
+    struct _child_ *next;		/* For the linked list */
 } CHILD;
 
 /* Values for the 'flags' field */
@@ -109,7 +84,7 @@ typedef struct _child_ {
 #define FAILING			16	/* process respawns rapidly */
 #define WAITING			32	/* We're waiting for this process */
 #define ZOMBIE			64	/* This process is already dead */
-#define XECUTED		128	/* Set if spawned once or more times */
+#define XECUTED		    128	/* Set if spawned once or more times */
 
 /* Log levels. */
 #define L_CO	1		/* Log on the console. */
@@ -157,8 +132,7 @@ extern char prevlevel;
 #ifdef __FreeBSD__
 #define UTMP_FILE "/var/run/utmp"
 #define RUN_LVL 1
-struct utmp
-{
+struct utmp {
    char ut_id[4];
 };
 #endif

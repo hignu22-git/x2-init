@@ -1520,7 +1520,7 @@ read_inittab(void) {
 		0 inittab done, 1 inittab and inittab.d done */
 	DIR *tabdir = NULL;		   	/* the rc.d dir */
 	struct dirent *file_entry; 	/* rc.d entry */
-	char f_name[272];		   	/* size d_name + strlen /etc/inittad.d/ */
+	char f_name[272];		   	/* size d_name + strlen /etc/rc.d/ */
 
 #if DEBUG
 	if (newFamily != NULL)
@@ -1531,57 +1531,52 @@ read_inittab(void) {
 	INITDBG(L_VB, "Reading inittab");
 #endif
 	/* OPEN INITTAB READ */
-	if ((fp = fopen(INITTAB, "r")) == NULL)
-		initlog(L_VB, "No inittab file found");
+	if ((fp = fopen(INITTAB, "r")) == NULL) 	initlog(L_VB, "No inittab file found");
 	/* OPEN RC.D */
-	if ((tabdir = opendir(INITTABD)) == NULL)
-		initlog(L_VB, "No rc.d directory found");
-	while (done != 1){
-		if (done == -1){
-			if (fp == NULL || fgets(buf, sizeof(buf), fp) == NULL) {
-				done = 0;
-				for (old = newFamily; old; old = old->next)
-					if (strpbrk(old->rlevel, "S"))
-						break;
-				if (old == NULL)
-					snprintf(buf, sizeof(buf), "~~:S:wait:%s\n", SULOGIN);
-				else
-					continue;
+	if ((tabdir = opendir(INITTABD)) == NULL)	initlog(L_VB, "No rc.d directory found");
+	while (done != 1) {
+		if (done == -1) {
+			if (fp == NULL || fgets(buf, sizeof(buf), fp) == NULL) { 	done = 0;
+				for (old = newFamily; old; old = old->next) 
+					if (strpbrk(old->rlevel, "S")) break;
+				if (old == NULL) snprintf(buf, sizeof(buf), "~~:S:wait:%s\n", SULOGIN);
+				else continue;
 			}
-		} else if (done == 0) {
-			/* parse /etc/rc.d and read all .tab files */
-			if (tabdir != NULL) {
-				if ((file_entry = readdir(tabdir)) != NULL) {
+		} else if (done == 0)  {
+			/*-------- parse /etc/rc.d and read all .tab files --------*/
+			if(tabdir != NULL) {
+				if((file_entry = readdir(tabdir)) != NULL) {
 					/* ignore files not like *.tab */
 					if (!strcmp(file_entry->d_name, ".") || !strcmp(file_entry->d_name, "..")) continue;
-					if (strlen(file_entry->d_name) < 5 || 
-						strcmp(file_entry->d_name + strlen(file_entry->d_name) - 4, ".tab"))   continue;
+					if (strlen (file_entry->d_name) 	 < 5 || 
+						strcmp (file_entry->d_name + strlen(file_entry->d_name) - 4, ".tab")) continue;
 					/* initialize filename */
-					memset(f_name, 0, sizeof(char ) * 272);
-					snprintf(f_name, 272, "/etc/rc.d/%s", file_entry->d_name);
-					initlog(L_VB, "Reading: %s", f_name);
+					memset(f_name, 0, sizeof(char) * 272) ;
+					snprintf(f_name, 272, "/etc/rc.d/%s ", file_entry->d_name);
+					initlog(L_VB, "Reading: %s", f_name) ;
 					/* read file in rc.d only one entry per file */
-					if ((fp_tab = fopen(f_name, "r") ) == NULL)  continue;
+					if ((fp_tab= fopen(f_name ,"r")) == NULL)  continue;
 					/* read the file while the line contain comment */
 					while (fgets(buf, sizeof(buf), fp_tab) != NULL) {
 						for (p = buf; *p == ' ' || *p == '\t'; p++) ;
-						if (*p != '#' && *p != '\n') break;
+						if (*p != '#' && *p != '\n') break ;
 					}
 					fclose(fp_tab);
 					/* do some checks */
 					if (strlen(p) == 0) continue;
-				} /* end of readdir, all is done */ else {
+				} else {
+					/* end of readdir, all is done */
 					done = 1;
 					continue;
 				}
-			} /* end of if(tabdir!=NULL) */ 		else {
+			} else {
 				done = 1;
 				continue;
 			}
-		} /* end of if ( done == 0 ) */ lineNo++;
+		} lineNo++;
 		/* Skip comments and empty lines */
-		for (p = buf; *p == ' ' || *p == '\t'; p++) ;
-		if (*p == '#' || *p == '\n')	continue;
+		for (p = buf; *p == ' ' || *p == '\t'; p++) ; /*skip empty lines */
+		if  (*p == '#' || *p == '\n')	continue; /*skip comments lines*/
 		/* Decode the fields */
 		id = strsep(&p, ":");
 		rlevel = strsep(&p, ":");
@@ -1590,22 +1585,17 @@ read_inittab(void) {
 		/*	Check if syntax is OK. Be very verbose here, to
 		 *	avoid newbie postings on comp.os.linux.setup :) */
 		err[0] = 0;
-		if (!id || !*id)
-			strcpy(err, "missing id field");
-		if (!rlevel)
-			strcpy(err, "missing runlevel field");
-		if (!process)
-			strcpy(err, "missing process field");
-		if (!action || !*action)
-			strcpy(err, "missing action field");
+		if (!id || !*id)			strcpy(err, "missing id field");
+		if (!rlevel)				strcpy(err, "missing runlevel field");
+		if (!process)				strcpy(err, "missing process field");
+		if (!action || !*action)	strcpy(err, "missing action field");
 		if (id && strlen(id) > sizeof(utproto.ut_id))
-			sprintf(err, "id field too long (max %d characters)",
-					(int)sizeof(utproto.ut_id));
-		if (rlevel && strlen(rlevel) > 11)
+			sprintf(err, "id field too long (max %d characters)", (int)sizeof(utproto.ut_id));
+		if (rlevel && strlen(rlevel) > 11) 
 			strcpy(err, "rlevel field too long (max 11 characters)");
-		if (process && strlen(process) > 127)
+		if (process && strlen(process) > 127) 
 			strcpy(err, "process field too long (max 127 characters)");
-		if (action && strlen(action) > 32)
+		if (action && strlen(action) > 32) 
 			strcpy(err, "action field too long");
 		if (err[0] != 0) {
 			initlog(L_VB, "%s[%d]: %s", INITTAB, lineNo, err);
@@ -1641,19 +1631,14 @@ read_inittab(void) {
 			for (f = 0; f < (int)sizeof(rlevel) - 1 && rlevel[f]; f++) {
 				ch->rlevel[f] = rlevel[f];
 				if (ch->rlevel[f] == 's') ch->rlevel[f] = 'S'  ;
-			}
-			strncpy(ch->rlevel, rlevel, sizeof(ch->rlevel) - 1);
-		}
-		else
-		{
+			} strncpy(ch->rlevel, rlevel, sizeof(ch->rlevel) - 1);
+		} else {
 			strcpy(ch->rlevel, "0123456789");
 			if (ISPOWER(ch->action))
 				strcpy(ch->rlevel, "S0123456789");
 		}
-		/*
-		 *	We have the fake runlevel '#' for SYSINIT  and
-		 *	'*' for BOOT and BOOTWAIT.
-		 */
+		/*	We have the fake runlevel '#' for SYSINIT  and
+		 *	'*' for BOOT and BOOTWAIT. */
 		if (ch->action == SYSINIT)
 			strcpy(ch->rlevel, "#");
 		if (ch->action == BOOT || ch->action == BOOTWAIT)
@@ -1662,44 +1647,26 @@ read_inittab(void) {
 		/*
 		 *	Now add it to the linked list. Special for powerfail.
 		 */
-		if (ISPOWER(ch->action))
-		{
-
-			/*
-			 *	Disable by default
-			 */
+		if (ISPOWER(ch->action)) {
+			/*	Disable by default */
 			ch->flags |= XECUTED;
-
-			/*
-			 *	Tricky: insert at the front of the list..
-			 */
+			/*	Tricky: insert at the front of the list ... */
 			old = NULL;
-			for (i = newFamily; i; i = i->next)
-			{
-				if (!ISPOWER(i->action))
-					break;
+			for (i = newFamily; i; i = i->next) {
+				if (!ISPOWER(i->action)) break;
 				old = i;
 			}
-			/*
-			 *	Now add after entry "old"
-			 */
-			if (old)
-			{
+			/* Now add after entry "old" */
+			if (old) {
 				ch->next = i;
 				old->next = ch;
-				if (i == NULL)
-					head = ch;
-			}
-			else
-			{
+				if (i == NULL) head = ch;
+			} else {
 				ch->next = newFamily;
 				newFamily = ch;
-				if (ch->next == NULL)
-					head = ch;
+				if (ch->next == NULL) head = ch;
 			}
-		}
-		else
-		{
+		} else {
 			/*
 			 *	Just add at end of the list
 			 */

@@ -26,7 +26,7 @@
 #include <sys/syslog.h>
 #include <sys/time.h>
 /*
- * inittab.d
+ * rc.d
  */
 #include <sys/types.h>
 #include <dirent.h>
@@ -38,16 +38,35 @@
 #include "../src/runlevellog.h"
 #include "../src/set.h"
 
-#ifndef SIGPWR
-#  define SIGPWR SIGUSR2
-#endif
 
-#ifndef CBAUD
-#  define CBAUD		0
+void read2_inittab(void){
+	FILE *fp;			 		/* The INITTAB file */
+	FILE *fp_tab;		 		/* The INITTABD files */
+	CHILD *ch, *old, *i; 		/* Pointers to CHILD structure */
+	CHILD *head = NULL;	 		/* Head of linked list */
+#ifdef INITLVL
+	struct stat st; 			/* To stat INITLVL */
 #endif
-#ifndef CBAUDEX
-#  define CBAUDEX	0
-#endif
+	sigset_t nmask, omask; 		/* For blocking SIGCHLD. */
+	char buf[256];		   		/* Line buffer */
+	char err[64];		   		/* Error message. */
+	char *id, *rlevel,
+		*action, *process; 		/* Fields of a line */
+	char *p;
+	int lineNo = 0;			   	/* Line number in INITTAB file */
+	int actionNo;			   	/* Decoded action field */
+	int f;					   	/* Counter */
+	int round;				   	/* round 0 for SIGTERM, 1 for SIGKILL */
+	int foundOne = 0;		   	/* No killing no sleep */
+	int talk;				   	/* Talk to the user */
+	int done = -1;			   	/* Ready yet? , 2 level : -1 nothing done,
+		0 inittab done, 1 inittab and inittab.d done */
+	DIR *tabdir = NULL;		   	/* the rc.d dir */
+	struct dirent *file_entry; 	/* rc.d entry */
+	char f_name[272];		   	/* size d_name + strlen /etc/rc.d/ */
+
+	if((fp = fopen(INITTAB, "r"))= NULL)
+}
 
 
 /* MAIN FUNCTION */ 
@@ -55,37 +74,6 @@ int
 main( int argc,
  	char **argv )
 {
-
-	FILE *fp  ; 		/* pach/to/inittab */
-	char* dmStr   ; 	/* value argv [ 2 ] */
-	char  gtStr[255] ; 	/* string for input in the utility */
-
-	if (!strcmp(argv[1], "--change-dm")){
-		if (!strcmp(argv[2], "/usr/bin/sddm") || (!strcmp(argv[2], "sddm"))){
-			dmStr = " exec /usr/bin/sddm ";
-		}
-		else if(!strcmp(argv[2], "/opt/kde/bin/kdm")) {
-			dmStr = " exec /opt/kde/bin/kdm -nodaemon " ;
-		}
-		else if(!strcmp(argv[2], "/usr/bin/kdm")) {
-			dmStr = "exec /usr/bin/kdm -nodaemon " ;
-		}
-		else if(!strcmp(argv[2], "/usr/bin/xdm")) {
-			dmStr = "exec /usr/bin/xdm -nodaemon -config /etc/X11/xdm/liveslak-xdm/xdm-config" ;
-		}
-		else if(!strcmp(argv[2], "/usr/X11R6/bin/xdm")) {
-			dmStr = "/usr/X11R6/bin/xdm -nodaemon -config /etc/X11/xdm/liveslak-xdm/xdm-config" ;
-		}
-		/*2*/
-		fp = fopen( RUNLEVEL_DEF_DM ,
-			"w" );
-		fputs(dmStr, fp);
-		fclose(fp);
-	}else if (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h") ) {
-		printf("Made By hignu22, Andre Bobrovskiy <hianon228@yandex.fr> ");
-	}/*else if (!strcmp(argv[1], "--set-mode") || !strcmp(argv[1], "-S")){
-
-	}*/
 
     return 0;
 }

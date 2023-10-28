@@ -58,10 +58,10 @@ endif
 MANPAGES:=$(MAN1) $(MAN5) $(MAN8)
 MANPAGES+=$(subst ../man/,,$(foreach man,$(MANPAGES),$(wildcard ../man/??/$(man))))
 
-ID		= $(shell id -u)
-BIN_OWNER	= root
-BIN_GROUP	= root
-BIN_COMBO	= $(BIN_OWNER):$(BIN_GROUP)
+ID			= 	$(shell id -u)
+BIN_OWNER	= 	root
+BIN_GROUP	= 	root
+BIN_COMBO	=   $(BIN_OWNER):$(BIN_GROUP)
 ifeq ($(ID),0)
   INSTALL_EXEC	= install -o $(BIN_OWNER) -g $(BIN_GROUP) -m 755
   INSTALL_DATA	= install -o $(BIN_OWNER) -g $(BIN_GROUP) -m 644
@@ -198,7 +198,7 @@ install:	all
 			$(INSTALL_EXEC) $$i $(ROOT)/usr/bin/ ; \
 		done
 		# $(INSTALL_DIR) $(ROOT)/etc/
-		$(INSTALL_DIR) $(ROOT)/etc/inittab.d
+		$(INSTALL_DIR) $(ROOT)/etc/rc.d
 		# $(INSTALL_EXEC) ../doc/initscript.sample $(ROOT)/etc/
 		ln -sf halt $(ROOT)/sbin/reboot
 		ln -sf halt $(ROOT)/sbin/poweroff

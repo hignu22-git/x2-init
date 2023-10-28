@@ -1,45 +1,4 @@
-/*
- * killall5.c	Kill all processes except processes that have the
- *		same session id, so that the shell that called us
- *		won't be killed. Typically used in shutdown scripts.
- *
- * pidof.c	Tries to get the pid of the process[es] named.
- *
- * Version:	2.86 30-Jul-2004 MvS
- *
- * Usage:	killall5 [-][signal]
- *		pidof [-s] [-o omitpid [-o omitpid]] program [program..]
- *
- * Authors:	Miquel van Smoorenburg, miquels@cistron.nl
- *
- *		Riku Meskanen, <mesrik@jyu.fi>
- *		- return all running pids of given program name
- *		- single shot '-s' option for backwards compatibility
- *		- omit pid '-o' option and %PPID (parent pid metavariable)
- *		- syslog() only if not a connected to controlling terminal
- *		- swapped out programs pids are caught now
- *
- *		Werner Fink
- *		- make omit dynamic
- *		- provide '-n' to skip stat(2) syscall on network based FS
- *
- *		This file is part of the sysvinit suite,
- *		Copyright (C) 1991-2004 Miquel van Smoorenburg.
- *
- *		This program is free software; you can redistribute it and/or modify
- *		it under the terms of the GNU General Public License as published by
- *		the Free Software Foundation; either version 2 of the License, or
- *		(at your option) any later version.
- *
- *		This program is distributed in the hope that it will be useful,
- *		but WITHOUT ANY WARRANTY; without even the implied warranty of
- *		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *		GNU General Public License for more details.
- *
- *		You should have received a copy of the GNU General Public License
- *		along with this program; if not, write to the Free Software
- *		Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- */
+
 #include <dirent.h>
 #include <errno.h>
 #include <getopt.h>
