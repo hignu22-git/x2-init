@@ -23,10 +23,8 @@
 #  define INITRQ_HLEN	64
 #endif
 
-/*
- *	This is what BSD 4.4 uses when talking to init.
- *	Linux doesn't use this right now.
- */
+/*	This is what BSD 4.4 uses when talking to init.
+ *	Linux doesn't use this right now. */
 struct init_request_bsd {
 	char	gen_id[8];		/* Beats me.. telnetd uses "fe" */
 	char	tty_id[16];		/* Tty name minus /dev/tty      */
@@ -38,14 +36,10 @@ struct init_request_bsd {
 	char	reserved[128];		/* For future expansion.        */
 };
 
-
-/*
- *	Because of legacy interfaces, "runlevel" and "sleeptime"
+/*	Because of legacy interfaces, "runlevel" and "sleeptime"
  *	aren't in a separate struct in the union.
- *
  *	The weird sizes are because init expects the whole
- *	struct to be 384 bytes.
- */
+ *	struct to be 384 bytes. */
 struct init_request {
 	int	magic;			/* Magic number                 */
 	int	cmd;			/* What kind of request         */
@@ -56,5 +50,4 @@ struct init_request {
 		char			data[368];
 	} i;
 };
-
 #endif

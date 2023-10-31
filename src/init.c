@@ -63,6 +63,7 @@ extern char **environ;
 #include "reboot.h"
 #include "runlevellog.h"
 #include "set.h"
+#include "x2init-struct.h"
 
 #ifndef SIGPWR
 #define SIGPWR SIGUSR2
@@ -134,69 +135,6 @@ const char *Signature = "12567362"; /* Signature for re-exec fd */
 					(i) == POWEROKWAIT || (i) == POWERFAILNOW || \
 					(i) == CTRLALTDEL)
 
-/* ascii values for the `action' field. */
-struct actions
-{
-	char *name;
-	int act;
-} actions[] = {
-	{"respawn", RESPAWN},
-	{"wait", WAIT},
-	{"once", ONCE},
-	{"boot", BOOT},
-	{"bootwait", BOOTWAIT},
-	{"powerfail", POWERFAIL},
-	{"powerfailnow", POWERFAILNOW},
-	{"powerwait", POWERWAIT},
-	{"powerokwait", POWEROKWAIT},
-	{"ctrlaltdel", CTRLALTDEL},
-	{"off", OFF},
-	{"ondemand", ONDEMAND},
-	{"initdefault", INITDEFAULT},
-	{"sysinit", SYSINIT},
-	{"kbrequest", KBREQUEST},
-	{NULL, 0},
-};
-
-/*
- *	State parser token table (see receive_state)
- */
-struct
-{
-	char name[4];
-	int cmd;
-} cmds[] = {
-	{"VER", C_VER},
-	{"END", C_END},
-	{"REC", C_REC},
-	{"EOR", C_EOR},
-	{"LEV", C_LEV},
-	{"FL ", C_FLAG},
-	{"AC ", C_ACTION},
-	{"CMD", C_PROCESS},
-	{"PID", C_PID},
-	{"EXS", C_EXS},
-	{"-RL", D_RUNLEVEL},
-	{"-TL", D_THISLEVEL},
-	{"-PL", D_PREVLEVEL},
-	{"-SI", D_GOTSIGN},
-	{"-WR", D_WROTE_WTMP_REBOOT},
-	{"-WU", D_WROTE_UTMP_REBOOT},
-	{"-ST", D_SLTIME},
-	{"-DB", D_DIDBOOT},
-	{"-LW", D_WROTE_WTMP_RLEVEL},
-	{"-LU", D_WROTE_UTMP_RLEVEL},
-	{"", 0}};
-struct
-{
-	char *name;
-	int mask;
-} flags[] = {
-	{"RU", RUNNING},
-	{"DE", DEMAND},
-	{"XD", XECUTED},
-	{"WT", WAITING},
-	{NULL, 0}};
 
 #define NR_EXTRA_ENV 16
 char *extra_env[NR_EXTRA_ENV];
@@ -912,15 +850,12 @@ void print(char *s)
 	}
 }
 
-/*
- *	Log something to a logfile and the console.
- */
+/*	Log something to a logfile and the console. */
 #ifdef __GNUC__
 __attribute__((format(printf, 2, 3)))
 #endif
-void
-initlog(int loglevel, char *s, ...)
-{
+void  
+initlog(int loglevel, char *s, ...)  {
 	va_list va_alist;
 	char buf[256];
 	sigset_t nmask, omask;
@@ -929,34 +864,25 @@ initlog(int loglevel, char *s, ...)
 	vsnprintf(buf, sizeof(buf), s, va_alist);
 	va_end(va_alist);
 
-	if (loglevel & L_SY)
-	{
-		/*
-		 *	Re-establish connection with syslogd every time.
-		 *	Block signals while talking to syslog.
-		 */
+	if (loglevel & L_SY) {
+		/*	Re-establish connection with syslogd every time.
+		 *	Block signals while talking to syslog. */
 		sigfillset(&nmask);
 		sigprocmask(SIG_BLOCK, &nmask, &omask);
 		openlog("init", 0, LOG_DAEMON);
 		syslog(LOG_INFO, "%s", buf);
 		closelog();
 		sigprocmask(SIG_SETMASK, &omask, NULL);
-	}
-
-	/*
-	 *	And log to the console.
-	 */
-	if (loglevel & L_CO)
-	{
+	} 
+	/*	And log to the console. */
+	if (loglevel & L_CO) {
 		print("\rINIT: ");
 		print(buf);
 		print("\r\n");
-	}
+	}   
 }
 
-/*
- *	Add or replace specific environment value
- */
+/*	Add or replace specific environment value */
 int addnewenv(const char *new, char **curr, int n)
 {
 	size_t nlen = strcspn(new, "=");
@@ -1512,7 +1438,7 @@ read_inittab(void) {
 	char *p;
 	int lineNo = 0;			   	/* Line number in INITTAB file */
 	int actionNo;			   	/* Decoded action field */
-	int f;					   	/* Counter */
+	int16_t f;				    /* Counter */
 	int round;				   	/* round 0 for SIGTERM, 1 for SIGKILL */
 	int foundOne = 0;		   	/* No killing no sleep */
 	int talk;				   	/* Talk to the user */
@@ -1534,6 +1460,8 @@ read_inittab(void) {
 	if ((fp = fopen(INITTAB, "r")) == NULL) 	initlog(L_VB, "No inittab file found");
 	/* OPEN RC.D */
 	if ((tabdir = opendir(INITTABD)) == NULL)	initlog(L_VB, "No rc.d directory found");
+	/* Schleife *
+	 * done !=1 */
 	while (done != 1) {
 		if (done == -1) {
 			if (fp == NULL || fgets(buf, sizeof(buf), fp) == NULL) { 	done = 0;
@@ -1576,7 +1504,7 @@ read_inittab(void) {
 		} lineNo++;
 		/* Skip comments and empty lines */
 		for (p = buf; *p == ' ' || *p == '\t'; p++) ; /*skip empty lines */
-		if  (*p == '#' || *p == '\n')	continue; /*skip comments lines*/
+		if  (*p == '#' || *p == '\n')	continue; 
 		/* Decode the fields */
 		id = strsep(&p, ":");
 		rlevel = strsep(&p, ":");
@@ -1589,16 +1517,14 @@ read_inittab(void) {
 		if (!rlevel)				strcpy(err, "missing runlevel field");
 		if (!process)				strcpy(err, "missing process field");
 		if (!action || !*action)	strcpy(err, "missing action field");
-		if (id && strlen(id) > sizeof(utproto.ut_id))
+		if (id && strlen(id) > sizeof(utproto.ut_id)) 
 			sprintf(err, "id field too long (max %d characters)", (int)sizeof(utproto.ut_id));
-		if (rlevel && strlen(rlevel) > 11) 
-			strcpy(err, "rlevel field too long (max 11 characters)");
-		if (process && strlen(process) > 127) 
-			strcpy(err, "process field too long (max 127 characters)");
-		if (action && strlen(action) > 32) 
-			strcpy(err, "action field too long");
+		if (rlevel && strlen(rlevel) > 11) strcpy(err, "rlevel field too long (max 11 characters)");
+		if (process && strlen(process)>127) strcpy(err,"process field too long (max 127 characters)");
+		if (action && strlen(action) > 32) strcpy(err, "action field too long");
+		/* err [0] != 0  */
 		if (err[0] != 0) {
-			initlog(L_VB, "%s[%d]: %s", INITTAB, lineNo, err);
+			initlog(L_VB, " ERROR => %s[%d]: %s ", INITTAB, lineNo, err);
 			INITDBG(L_VB, "%s:%s:%s:%s", id, rlevel, action, process);
 			continue;
 		}
@@ -1606,7 +1532,7 @@ read_inittab(void) {
 		actionNo = -1;
 		for (f = 0; actions[f].name; f++) {
 			if (strcasecmp(action, actions[f].name) == 0) {
-				actionNo = actions[f].act;
+				actionNo = actions[f].act ;
 				break;
 			}
 		}
@@ -1620,16 +1546,15 @@ read_inittab(void) {
 				initlog(L_VB, "%s[%d]: duplicate ID field \"%s\"", INITTAB, lineNo, id);
 				break;
 			}
-		}	if (old) continue;
-		/*	Allocate a CHILD structure */
-		ch = imalloc(sizeof(CHILD));
-		/* And fill it in. */
+		}	
+		if (old) continue;
+		ch = imalloc(sizeof(CHILD)); /* Allocate the << CHILD >> struct */
 		ch->action = actionNo;
 		strncpy(ch->id, id, sizeof(utproto.ut_id) + 1); /* Hack for different libs. */
 		strncpy(ch->process, process, sizeof(ch->process) - 1);
 		if (rlevel[0]) {
-			for (f = 0; f < (int)sizeof(rlevel) - 1 && rlevel[f]; f++) {
-				ch->rlevel[f] = rlevel[f];
+			for (f = 0; f < (int16_t)sizeof(rlevel) - 1 && rlevel[f]; f++) {
+				ch->rlevel[f] = rlevel[f] ;
 				if (ch->rlevel[f] == 's') ch->rlevel[f] = 'S'  ;
 			} strncpy(ch->rlevel, rlevel, sizeof(ch->rlevel) - 1);
 		} else {
@@ -1644,9 +1569,7 @@ read_inittab(void) {
 		if (ch->action == BOOT || ch->action == BOOTWAIT)
 			strcpy(ch->rlevel, "*");
 
-		/*
-		 *	Now add it to the linked list. Special for powerfail.
-		 */
+		/*	Now add it to the linked list. Special for powerfail. */
 		if (ISPOWER(ch->action)) {
 			/*	Disable by default */
 			ch->flags |= XECUTED;
@@ -1667,46 +1590,30 @@ read_inittab(void) {
 				if (ch->next == NULL) head = ch;
 			}
 		} else {
-			/*
-			 *	Just add at end of the list
-			 */
-			if (ch->action == KBREQUEST)
-				ch->flags |= XECUTED;
+			/*	Just add at end of the list */
+			if (ch->action == KBREQUEST)	ch->flags |= XECUTED;
 			ch->next = NULL;
-			if (head)
-				head->next = ch;
-			else
-				newFamily = ch;
+			if (head)  						head->next = ch;
+			else 							newFamily = ch;
 			head = ch;
 		}
-
-		/*
-		 *	Walk through the old list comparing id fields
-		 */
+		/*	Walk through the old list comparing id fields */
 		for (old = family; old; old = old->next)
-			if (strcmp(old->id, ch->id) == 0)
-			{
+			if (strcmp(old->id, ch->id) == 0) {
 				old->new = ch;
 				break;
 			}
 	}
-
-	/*
-	 *	We're done.
-	 */
-	if (fp)
-		fclose(fp);
-	if (tabdir)
-		closedir(tabdir);
+	/*	We're done. */
+	if (fp) fclose(fp);
+	if (tabdir) closedir(tabdir);
 
 #ifdef __linux__
 	check_kernel_console();
 #endif
 
-	/*
-	 *	Loop through the list of children, and see if they need to
-	 *	be killed.
-	 */
+	/*	Loop through the list of children, and see if they need to
+	 *	be killed. */
 
 	INITDBG(L_VB, "Checking for children to kill");
 	for (round = 0; round < 2; round++)

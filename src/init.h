@@ -77,6 +77,7 @@ typedef struct _child_ {
     struct _child_ *next;		/* For the linked list */
 } CHILD;
 
+
 /* Values for the 'flags' field */
 #define RUNNING			2	/* Process is still running */
 #define KILLME			4	/* Kill this process */
@@ -87,17 +88,15 @@ typedef struct _child_ {
 #define XECUTED		    128	/* Set if spawned once or more times */
 
 /* Log levels. */
-#define L_CO	1		/* Log on the console. */
-#define L_SY	2		/* Log with syslog() */
-#define L_VB	(L_CO|L_SY)	/* Log with both. */
+#define L_CO	1		        /* Log on the console. */
+#define L_SY	2		        /* Log with syslog() */
+#define L_VB	(L_CO|L_SY)	    /* Log with both. */
 
 #ifndef NO_PROCESS
 #  define NO_PROCESS 0
 #endif
 
-/*
- *	Global variables.
- */
+/* Global variables. */
 extern CHILD *family;
 extern int wrote_wtmp_reboot;
 extern int wrote_utmp_reboot;
