@@ -32,7 +32,7 @@
 #include <sys/syslog.h>
 #include <sys/time.h>
 /*
- * inittab.d
+ * rc.d
  */
 #include <sys/types.h>
 #include <dirent.h>
@@ -76,79 +76,9 @@ extern char **environ;
 #define CBAUDEX 0
 #endif
 
-/* Set a signal handler. */
-#define SETSIG(sa, sig, fun, flags) \
-	do                              \
-	{                               \
-		memset(&sa, 0, sizeof(sa)); \
-		sa.sa_handler = fun;        \
-		sa.sa_flags = flags;        \
-		sigemptyset(&sa.sa_mask);   \
-		sigaction(sig, &sa, NULL);  \
-	} while (0)
-
-/* Version information */
-char *Version = "@(#) init " VERSION " hianon228@yandex.fr";
-char *bootmsg = "version " VERSION " %s";
-#define E_VERSION "INIT_VERSION=x2init-" VERSION
-
-CHILD *family = NULL;	 /* The linked list of all entries */
-CHILD *newFamily = NULL; /* The list after inittab re-read */
-
-CHILD ch_emerg = {/* Emergency shell */
-				  WAITING, 0, 0, 0, 0,
-				  "~~",
-				  "S",
-				  3,
-				  "/sbin/sulogin",
-				  NULL,
-				  NULL};
-
-char runlevel = 'S';				   /* The current run level */
-char thislevel = 'S';				   /* The current runlevel */
-char prevlevel = 'N';				   /* Previous runlevel */
-int dfl_level = 0;					   /* Default runlevel */
-sig_atomic_t got_cont = 0;			   /* Set if we received the SIGCONT signal */
-sig_atomic_t got_signals;			   /* Set if we received a signal. */
-int emerg_shell = 0;				   /* Start emergency shell? */
-int wrote_wtmp_reboot = 1;			   /* Set when we wrote the reboot record */
-int wrote_utmp_reboot = 1;			   /* Set when we wrote the reboot record */
-int wrote_wtmp_rlevel = 1;			   /* Set when we wrote the runlevel record */
-int wrote_utmp_rlevel = 1;			   /* Set when we wrote the runlevel record */
-int sleep_time = WAIT_BETWEEN_SIGNALS; /* Sleep time between TERM and KILL */
-char *argv0;						   /* First arguments; show up in ps listing */
-int maxproclen;						   /* Maximal length of argv[0] with \0 */
-struct utmp utproto;				   /* Only used for sizeof(utproto.ut_id) */
-char *console_dev;					   /* Console device. */
-int pipe_fd = -1;					   /* /run/initctl */
-int did_boot = 0;					   /* Did we already do BOOT* stuff? */
-int main(int, char **);
-
-/*	Used by re-exec part */
-int reload = 0;						/* Should we do initialization stuff? */
-char *myname = INIT;				/* What should we exec */
-int oops_error;						/* Used by some of the re-exec code. */
-const char *Signature = "12567362"; /* Signature for re-exec fd */
-
-/* Macro to see if this is a special action */
-#define ISPOWER(i) ((i) == POWERWAIT || (i) == POWERFAIL ||      \
-					(i) == POWEROKWAIT || (i) == POWERFAILNOW || \
-					(i) == CTRLALTDEL)
-
-
-#define NR_EXTRA_ENV 16
-char *extra_env[NR_EXTRA_ENV];
-
-#define MINI_SLEEP 10	 /* ten milliseconds */
-#define SHORT_SLEEP 5000 /* five seconds */
-#define LONG_SLEEP 30000 /* 30 seconds sleep to deal with memory issues*/
-
-/*
- *	Sleep a number of milliseconds.
- *
+/*  Sleep a number of milliseconds.
  *	This only works correctly because Linux select updates
- *	the elapsed time in the struct timeval passed to select!
- */
+ *	the elapsed time in the struct timeval passed to select! */
 static void do_msleep(int msec)
 {
 	struct timeval tv;
@@ -1506,10 +1436,10 @@ read_inittab(void) {
 		for (p = buf; *p == ' ' || *p == '\t'; p++) ; /*skip empty lines */
 		if  (*p == '#' || *p == '\n')	continue; 
 		/* Decode the fields */
-		id = strsep(&p, ":");
-		rlevel = strsep(&p, ":");
-		action = strsep(&p, ":");
-		process = strsep(&p, "\n");
+		id = 		strsep(&p, ":");
+		rlevel = 	strsep(&p, ":");
+		action = 	strsep(&p, ":");
+		process = 	strsep(&p, "\n");
 		/*	Check if syntax is OK. Be very verbose here, to
 		 *	avoid newbie postings on comp.os.linux.setup :) */
 		err[0] = 0;
@@ -1519,19 +1449,19 @@ read_inittab(void) {
 		if (!action || !*action)	strcpy(err, "missing action field");
 		if (id && strlen(id) > sizeof(utproto.ut_id)) 
 			sprintf(err, "id field too long (max %d characters)", (int)sizeof(utproto.ut_id));
-		if (rlevel && strlen(rlevel) > 11) strcpy(err, "rlevel field too long (max 11 characters)");
+		if (rlevel  && strlen(rlevel) > 11) strcpy(err, "rlevel field too long (max 11 characters)");
 		if (process && strlen(process)>127) strcpy(err,"process field too long (max 127 characters)");
-		if (action && strlen(action) > 32) strcpy(err, "action field too long");
+		if (action  && strlen(action) > 32) strcpy(err, "action field too long");
 		/* err [0] != 0  */
 		if (err[0] != 0) {
-			initlog(L_VB, " ERROR => %s[%d]: %s ", INITTAB, lineNo, err);
+			initlog(L_VB, " %s[%d]: %s ", INITTAB, lineNo, err);
 			INITDBG(L_VB, "%s:%s:%s:%s", id, rlevel, action, process);
 			continue;
 		}
-		/*	Decode the "action" field */
+		/* Decode the "action" field */
 		actionNo = -1;
 		for (f = 0; actions[f].name; f++) {
-			if (strcasecmp(action, actions[f].name) == 0) {
+			if( strcasecmp(action, actions[f].name) == 0) {
 				actionNo = actions[f].act ;
 				break;
 			}
@@ -1546,8 +1476,7 @@ read_inittab(void) {
 				initlog(L_VB, "%s[%d]: duplicate ID field \"%s\"", INITTAB, lineNo, id);
 				break;
 			}
-		}	
-		if (old) continue;
+		}	if (old) continue;
 		ch = imalloc(sizeof(CHILD)); /* Allocate the << CHILD >> struct */
 		ch->action = actionNo;
 		strncpy(ch->id, id, sizeof(utproto.ut_id) + 1); /* Hack for different libs. */

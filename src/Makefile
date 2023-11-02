@@ -202,23 +202,20 @@ install:	all
 		# $(INSTALL_EXEC) ../doc/initscript.sample $(ROOT)/etc/
 		ln -sf halt $(ROOT)/sbin/reboot
 		ln -sf halt $(ROOT)/sbin/poweroff
-		ln -sf init $(ROOT)/sbin/telinit
+		ln -sf init $(ROOT)/sbin/x2-init
 		ln -sf ../sbin/killall5 $(ROOT)/bin/pidof
 		if [ ! -f $(ROOT)/usr/bin/lastb ]; then \
 			ln -sf last $(ROOT)/usr/bin/lastb; \
 		fi
 		$(INSTALL_DIR) $(ROOT)/usr/include/
 		$(INSTALL_DATA) initreq.h $(ROOT)/usr/include/
-		for man in $(MANPAGES) ; do \
-		    targetdir=$(ROOT)$(MANDIR)/$$(dirname $$man)/man$${man##*.}; \
-		    $(INSTALL_DIR) $$targetdir; \
-		    $(INSTALL_DATA) ../man/$$man $$targetdir/$$(basename $$man); \
-		    sed -i "1{ $(MANDB); }" $$targetdir/$$(basename $$man); \
-		done
+#		for man in $(MANPAGES) ; do \
+#		    targetdir=$(ROOT)$(MANDIR)/$$(dirname $$man)/man$${man##*.}; \
+#		    $(INSTALL_DIR) $$targetdir; \
+#		    $(INSTALL_DATA) ../man/$$man $$targetdir/$$(basename $$man); \
+#		    sed -i "1{ $(MANDB); }" $$targetdir/$$(basename $$man); \
+#		done
 ifeq ($(ROOT),)
-		#
-		# This part is skipped on Debian systems, the
-		# debian.preinst script takes care of it.
 		@if [ ! -p /run/initctl ]; then \
 		 echo "Creating /run/initctl"; \
 		 rm -f /run/initctl; \
