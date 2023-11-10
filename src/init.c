@@ -88,18 +88,13 @@ static void do_msleep(int msec)
 		;
 }
 
-/*
- *	Non-failing allocation routines (init cannot fail).
- */
-static void *imalloc(size_t size)
-{
+/* Non-failing allocation routines (init cannot fail). */
+static void *imalloc(size_t size) {
 	void *m;
-	while ((m = malloc(size)) == NULL)
-	{
+	while ((m = malloc(size)) == NULL) {
 		initlog(L_VB, "out of memory");
 		do_msleep(SHORT_SLEEP);
-	}
-	memset(m, 0, size);
+	} memset(m, 0, size);
 	return m;
 }
 
@@ -1353,9 +1348,9 @@ static void check_kernel_console()
 /* Read the inittab file. */
 static void
 read_inittab(void) {
+
 	FILE *fp;			 		/* The INITTAB file */
 	FILE *fp_tab;		 		/* The INITTABD files */
-	CHILD *ch, *old, *i; 		/* Pointers to CHILD structure */
 	CHILD *head = NULL;	 		/* Head of linked list */
 #ifdef INITLVL
 	struct stat st; 			/* To stat INITLVL */
@@ -1363,8 +1358,7 @@ read_inittab(void) {
 	sigset_t nmask, omask; 		/* For blocking SIGCHLD. */
 	char buf[256];		   		/* Line buffer */
 	char err[64];		   		/* Error message. */
-	char *id, *rlevel,
-		*action, *process; 		/* Fields of a line */
+	char *id, *rlevel, *action, *process; /* Fields of a line */
 	char *p;
 	int lineNo = 0;			   	/* Line number in INITTAB file */
 	int actionNo;			   	/* Decoded action field */
@@ -1377,6 +1371,8 @@ read_inittab(void) {
 	DIR *tabdir = NULL;		   	/* the rc.d dir */
 	struct dirent *file_entry; 	/* rc.d entry */
 	char f_name[272];		   	/* size d_name + strlen /etc/rc.d/ */
+
+	CHILD *ch, *old, *i; 		/* Pointers to CHILD structure */
 
 #if DEBUG
 	if (newFamily != NULL)
@@ -1470,34 +1466,30 @@ read_inittab(void) {
 			initlog(L_VB, "%s[%d]: %s: unknown action field", INITTAB, lineNo, action);
 			continue;
 		}
-		/*	See if the id field is unique */
+		/*	See if the id field is unique \/ */
 		for (old = newFamily; old; old = old->next) {
 			if (strcmp(old->id, id) == 0 && strcmp(id, "~~")) {
 				initlog(L_VB, "%s[%d]: duplicate ID field \"%s\"", INITTAB, lineNo, id);
 				break;
 			}
 		}	if (old) continue;
-		ch = imalloc(sizeof(CHILD)); /* Allocate the << CHILD >> struct */
+		ch = imalloc(sizeof(CHILD)); /* -- Allocate the << CHILD >> struct */
 		ch->action = actionNo;
 		strncpy(ch->id, id, sizeof(utproto.ut_id) + 1); /* Hack for different libs. */
 		strncpy(ch->process, process, sizeof(ch->process) - 1);
 		if (rlevel[0]) {
 			for (f = 0; f < (int16_t)sizeof(rlevel) - 1 && rlevel[f]; f++) {
+				/* The loop is executed until f is equal to the size(bits) of rlevel */
 				ch->rlevel[f] = rlevel[f] ;
-				if (ch->rlevel[f] == 's') ch->rlevel[f] = 'S'  ;
+				if (ch->rlevel[f] == 's') ch->rlevel[f] = 'S'; /* if small key-register */
 			} strncpy(ch->rlevel, rlevel, sizeof(ch->rlevel) - 1);
 		} else {
 			strcpy(ch->rlevel, "0123456789");
-			if (ISPOWER(ch->action))
-				strcpy(ch->rlevel, "S0123456789");
+			if (ISPOWER(ch->action)) strcpy(ch->rlevel, "S0123456789");
 		}
-		/*	We have the fake runlevel '#' for SYSINIT  and
-		 *	'*' for BOOT and BOOTWAIT. */
-		if (ch->action == SYSINIT)
-			strcpy(ch->rlevel, "#");
-		if (ch->action == BOOT || ch->action == BOOTWAIT)
-			strcpy(ch->rlevel, "*");
-
+		/*	We have the fake runlevel '#' for SYSINIT  and '*' for BOOT and BOOTWAIT. */
+		if (ch->action == SYSINIT) 							strcpy(ch->rlevel, "#");
+		if (ch->action == BOOT || ch->action == BOOTWAIT) 	strcpy(ch->rlevel, "*");
 		/*	Now add it to the linked list. Special for powerfail. */
 		if (ISPOWER(ch->action)) {
 			/*	Disable by default */
@@ -1527,11 +1519,12 @@ read_inittab(void) {
 			head = ch;
 		}
 		/*	Walk through the old list comparing id fields */
-		for (old = family; old; old = old->next)
+		for (old = family; old; old = old->next) {
 			if (strcmp(old->id, ch->id) == 0) {
 				old->new = ch;
 				break;
 			}
+		}
 	}
 	/*	We're done. */
 	if (fp) fclose(fp);
@@ -1545,98 +1538,62 @@ read_inittab(void) {
 	 *	be killed. */
 
 	INITDBG(L_VB, "Checking for children to kill");
-	for (round = 0; round < 2; round++)
-	{
+	for (round = 0; round < 2; round++) {
 		talk = 1;
-		for (ch = family; ch; ch = ch->next)
-		{
+		for (ch = family; ch; ch = ch->next) {
 			ch->flags &= ~KILLME;
-
-			/*
-			 *	Is this line deleted?
-			 */
-			if (ch->new == NULL)
-				ch->flags |= KILLME;
-
-			/*
-			 *	If the entry has changed, kill it anyway. Note that
+			/*	Is this line deleted ? */
+			if (ch->new == NULL) ch->flags |= KILLME;
+			/*	If the entry has changed, kill it anyway. Note that
 			 *	we do not check ch->process, only the "action" field.
 			 *	This way, you can turn an entry "off" immediately, but
 			 *	changes in the command line will only become effective
-			 *	after the running version has exited.
-			 */
-			if (ch->new && ch->action != ch->new->action)
-				ch->flags |= KILLME;
-
-			/*
-			 *	Only BOOT processes may live in all levels
-			 */
-			if (ch->action != BOOT &&
-				strchr(ch->rlevel, runlevel) == NULL)
-			{
-				/*
-				 *	Ondemand procedures live always,
-				 *	except in single user
-				 */
-				if (runlevel == 'S' || !(ch->flags & DEMAND))
-					ch->flags |= KILLME;
+			 *	after the running version has exited. */
+			if (ch->new && ch->action != ch->new->action) ch->flags |= KILLME;
+			/*	Only BOOT processes may live in all levels */
+			if (ch->action != BOOT && strchr(ch->rlevel, runlevel) == NULL) {
+				/*	Ondemand procedures live always,
+				 *	except in single user   */
+				if (runlevel == 'S' || !(ch->flags & DEMAND)) ch->flags |= KILLME;
 			}
-
-			/*
-			 *	Now, if this process may live note so in the new list
-			 */
-			if ((ch->flags & KILLME) == 0)
-			{
+			/* Now, if this process may live note so in the new list */
+			if ((ch->flags & KILLME) == 0) {
 				ch->new->flags = ch->flags;
 				ch->new->pid = ch->pid;
 				ch->new->exstat = ch->exstat;
 				continue;
 			}
-
-			/*
-			 *	Is this process still around?
-			 */
-			if ((ch->flags & RUNNING) == 0)
-			{
+			/* 	Is this process still around? */
+			if ((ch->flags & RUNNING) == 0) {
 				ch->flags &= ~KILLME;
 				continue;
 			}
 			INITDBG(L_VB, "Killing \"%s\"", ch->process);
-			switch (round)
-			{
+			switch (round) {
 			case 0: /* Send TERM signal */
 				if (talk)
-					initlog(L_CO,
-							"Sending processes configured via /etc/inittab the TERM signal");
+					initlog(L_CO,"Sending processes configured via /etc/inittab the TERM signal");
 				kill(-(ch->pid), SIGTERM);
 				foundOne = 1;
 				break;
 			case 1: /* Send KILL signal and collect status */
 				if (talk)
-					initlog(L_CO,
-							"Sending processes configured via /etc/inittab the KILL signal");
+					initlog(L_CO,"Sending processes configured via /etc/inittab the KILL signal");
 				kill(-(ch->pid), SIGKILL);
 				break;
 			}
 			talk = 0;
 		}
-		/*
-		 *	See if we have to wait sleep_time seconds
-		 */
-		if (foundOne && round == 0)
-		{
+		/*	See if we have to wait sleep_time seconds */
+		if (foundOne && round == 0) {
 			/*
 			 *	Yup, but check every 10 milliseconds if we still have children.
 			 *      The f < 100 * sleep_time refers to sleep time in 10 millisecond chunks.
 			 */
-			for (f = 0; f < 100 * sleep_time; f++)
-			{
-				for (ch = family; ch; ch = ch->next)
-				{
-					if (!(ch->flags & KILLME))
-						continue;
-					if ((ch->flags & RUNNING) && !(ch->flags & ZOMBIE))
-						break;
+			for (f = 0; f < 100 * sleep_time; f++){
+				for (ch = family; ch; ch = ch->next){
+					if (!(ch->flags & KILLME)) 							continue;
+					if ((ch->flags & RUNNING) && !(ch->flags & ZOMBIE)) break;
 				}
 				if (ch == NULL)
 				{
@@ -1652,79 +1609,50 @@ read_inittab(void) {
 		}
 	}
 
-	/*
-	 *	Now give all processes the chance to die and collect exit statuses.
-	 */
-	if (foundOne)
-		do_msleep(MINI_SLEEP);
-	for (ch = family; ch; ch = ch->next)
-		if (ch->flags & KILLME)
-		{
-			if (!(ch->flags & ZOMBIE))
-				initlog(L_CO, "Pid %d [id %s] seems to hang", ch->pid,
-						ch->id);
-			else
-			{
-				INITDBG(L_VB, "Updating utmp for pid %d [id %s]",
-						ch->pid, ch->id);
+	/*	Now give all processes the chance to die and collect exit statuses. */
+	if (foundOne)	do_msleep(MINI_SLEEP);
+	for (ch = family; ch; ch = ch->next) {
+		if (ch->flags & KILLME) {
+			if (!(ch->flags & ZOMBIE)) 
+				initlog(L_CO, "Pid %d [id %s] seems to hang", ch->pid, ch->id);
+			else {
+				INITDBG(L_VB, "Updating utmp for pid %d [id %s]",ch->pid, ch->id);
 				ch->flags &= ~RUNNING;
 				if (ch->process[0] != '+')
 					write_utmp_wtmp("", ch->id, ch->pid, DEAD_PROCESS, NULL);
 			}
 		}
-
-	/*
-	 *	Both rounds done; clean up the list.
-	 */
+	}
+	/*	Both rounds done; clean up the list. */
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
-	for (ch = family; ch; ch = old)
-	{
+	for (ch = family; ch; ch = old) {
 		old = ch->next;
 		free(ch);
 	}
 	family = newFamily;
-	for (ch = family; ch; ch = ch->next)
-		ch->new = NULL;
+	for (ch = family; ch; ch = ch->next) ch->new = NULL;
 	newFamily = NULL;
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 
 #ifdef INITLVL
-	/*
-	 *	Dispose of INITLVL file.
-	 */
-	if (lstat(INITLVL, &st) >= 0 && S_ISLNK(st.st_mode))
-	{
-		/*
-		 *	INITLVL is a symbolic link, so just truncate the file.
-		 */
+	/*	Dispose of INITLVL file. */
+	if (lstat(INITLVL, &st) >= 0 && S_ISLNK(st.st_mode)) {
+		/*	INITLVL is a symbolic link, so just truncate the file */
 		close(open(INITLVL, O_WRONLY | O_TRUNC));
-	}
-	else
-	{
-		/*
-		 *	Delete INITLVL file.
-		 */
+	} else {
+		/* Delete INITLVL file. */
 		unlink(INITLVL);
 	}
 #endif
 #ifdef INITLVL2
-	/*
-	 *	Dispose of INITLVL2 file.
-	 */
-	if (lstat(INITLVL2, &st) >= 0 && S_ISLNK(st.st_mode))
-	{
-		/*
-		 *	INITLVL2 is a symbolic link, so just truncate the file.
-		 */
+	/*	Dispose of INITLVL2 file. */
+	if (lstat(INITLVL2, &st) >= 0 && S_ISLNK(st.st_mode)) {
+		/*	INITLVL2 is a symbolic link, so just truncate the file.  */
 		close(open(INITLVL2, O_WRONLY | O_TRUNC));
-	}
-	else
-	{
-		/*
-		 *	Delete INITLVL2 file.
-		 */
+	} else {
+		/*	Delete INITLVL2 file. */
 		unlink(INITLVL2);
 	}
 #endif
@@ -2741,8 +2669,7 @@ static void process_signals()
 \*	THE MAIN LOOP */
 /******************\
 \******************/
-static void 
-init_main(void) {
+static void init_main(void) {
 	CHILD *ch;
 	struct sigaction sa;
 	sigset_t sgt;
@@ -2751,16 +2678,12 @@ init_main(void) {
 	if (!reload) {
 #if INITDEBUG
 		/* Fork so we can debug the init process.*/
-		if ((f = fork()) > 0)
-		{
+		if ((f = fork()) > 0) {
 			static const char killmsg[] = "PRNT: init killed.\r\n";
 			pid_t rc;
-			while ((rc = wait(&st)) != f)
-				if (rc < 0 && errno == ECHILD)
-					break;
+			while ((rc = wait(&st)) != f) if (rc < 0 && errno == ECHILD) break;
 			safe_write(1, killmsg, sizeof(killmsg) - 1);
-			while (1)
-				pause();
+			while (1) pause();
 		}
 #endif /* Tell the kernel to send us SIGINT when CTRL-ALT-DEL \
 is pressed, and that we want to handle keyboard signals. */
@@ -2772,8 +2695,7 @@ is pressed, and that we want to handle keyboard signals. */
 		} else (void)ioctl(0, KDSIGACCEPT, SIGWINCH);
 #endif
 		/* Ignore all signals.*/
-		for (f = 1; f <= NSIG; f++)
-			SETSIG(sa, f, SIG_IGN, SA_RESTART);
+		for (f = 1; f <= NSIG; f++)	SETSIG(sa, f, SIG_IGN, SA_RESTART);
 	}
 	SETSIG(sa, SIGALRM, signal_handler, 0);
 	SETSIG(sa, SIGHUP, signal_handler, 0);
@@ -2799,8 +2721,7 @@ is pressed, and that we want to handle keyboard signals. */
 		/*	Set default PATH variable.*/
 		setenv("PATH", PATH_DEFAULT, 1 /* Overwrite */);
 		/*	Initialize /var/run/utmp (only works if /var is on root and mounted rw) */
-		if ((fd = open(UTMP_FILE, O_WRONLY | O_CREAT | O_TRUNC, 0644)) >= 0)
-			close(fd);
+		if ((fd = open(UTMP_FILE, O_WRONLY | O_CREAT | O_TRUNC, 0644)) >= 0) close(fd);
 		/*	Say hello to the world */
 		initlog(L_CO, bootmsg, "booting");
 		/*	See if we have to start an emergency shell. */
@@ -2808,11 +2729,9 @@ is pressed, and that we want to handle keyboard signals. */
 			pid_t rc;
 			SETSIG(sa, SIGCHLD, SIG_DFL, SA_RESTART);
 			if (spawn(&ch_emerg, &f) > 0) {
-				while ((rc = wait(&st)) != f)
-					if (rc < 0 && errno == ECHILD)
-						break;
-			}
-			SETSIG(sa, SIGCHLD, chld_handler, SA_RESTART);
+				while ((rc = wait(&st)) != f) 
+					if (rc < 0 && errno == ECHILD) break;
+			} 	SETSIG(sa, SIGCHLD, chld_handler, SA_RESTART);
 		} /* Start normal boot procedure */
 		runlevel = '#';
 		read_inittab();
@@ -2826,75 +2745,60 @@ is pressed, and that we want to handle keyboard signals. */
 		/* Set default PATH variable. */
 		setenv("PATH", PATH_DEFAULT, 0 /* Don't overwrite */);
 	} start_if_needed();
-
 	while (1) {
 		/* See if we need to make the boot transitions. */
 		boot_transitions();
 		INITDBG(L_VB, "init_main: waiting..");
 		/* Check if there are processes to be waited on. */
-		for (ch = family; ch; ch = ch->next)
-			if ((ch->flags & RUNNING) && ch->action != BOOT)
-				break;
+		for (ch = family; ch; ch = ch->next) 
+			if ((ch->flags & RUNNING) && ch->action != BOOT) break;
 #if CHANGE_WAIT
 		/* Wait until we get hit by some signal. */
 		while (ch != NULL && got_signals == 0) {
 			if (ISMEMBER(got_signals, SIGHUP)) {
 				/* See if there are processes to be waited on. */
-				for (ch = family; ch; ch = ch->next)
-					if (ch->flags & WAITING)
-						break;
+				for (ch = family; ch; ch = ch->next) if (ch->flags & WAITING) break;
 			}
 			if (ch != NULL) check_init_fifo();
 		}
 #else  /* CHANGE_WAIT */
-		if (ch != NULL && got_signals == 0)
-			check_init_fifo();
+		if (ch != NULL && got_signals == 0)	check_init_fifo();
 #endif /* CHANGE_WAIT */
-		/* Check the 'failing' flags */
-		fail_check();
-		/* Process any signals. */
-		process_signals();
-		/* See what we need to start up (again) */
-		start_if_needed();
+		/* Check the 'failing' flags */				fail_check();
+		/* Process any signals. */					process_signals();
+		/* See what we need to start up (again) */	start_if_needed();
 	} /*NOTREACHED*/
 }
-/* Tell the user about the syntax we expect. */
-static void usage(char *s){
-	fprintf(stderr, "Usage: %s {-e VAR[=VAL] | [-t SECONDS] {0|1|2|3|4|5|6|S|s|Q|q|A|a|B|b|C|c|U|u}}\n", s);
+static void 
+usage(char *s){
+	fprintf(stderr, 
+		"Usage X2-INiT:\n command => %s{-e VAR[=VAL]|[-t SECONDS]{0|1|2|3|4|5|6|S|s|Q|q|A|a|B|b|C|c|U|u}}\n Autor : Andre Bobrovskiy [hignu22] \n\n", s);
 	exit(1);
 }
 static int
-x2init(char *progname,
-	   int argc,
-	   char **argv)
-{
+x2init(char *progname, int argc, char **argv) {
 
 #ifdef TELINIT_USES_INITLVL
 	FILE *fp;
 #endif
-	struct init_request request;
-	struct sigaction sa;
-	int f, fd, l;
-	char *env = NULL;
+	struct 	init_request request		;
+	struct 	sigaction sa				;
+	int 	f, fd, l					;
+	char 	*env = NULL					;
 
 	memset(&request, 0, sizeof(request));
 	request.magic = INIT_MAGIC;
 
 	while ((f = getopt(argc, argv, "t:e:")) != EOF)
-		switch (f)
-		{
+		switch (f) {
 		case 't':
 			sleep_time = atoi(optarg);
 			break;
 		case 'e':
-			if (env == NULL)
-				env = request.i.data;
+			if (env == NULL) env = request.i.data;
 			l = strlen(optarg);
-			if (env + l + 2 > request.i.data + sizeof(request.i.data))
-			{
-				fprintf(stderr, "%s: -e option data "
-								"too large\n",
-						progname);
+			if (env + l + 2 > request.i.data + sizeof(request.i.data)) {
+				fprintf(stderr, "%s: -e option data " "too large\n", progname);
 				exit(1);
 			}
 			memcpy(env, optarg, l);
@@ -2906,48 +2810,33 @@ x2init(char *progname,
 			break;
 		}
 
-	if (env)
-		*env++ = 0;
-
-	if (env)
-	{
-		if (argc != optind)
-			usage(progname);
+	if (env) *env++ = 0;
+	if (env) {
+		if (argc != optind) usage(progname);
 		request.cmd = INIT_CMD_SETENV;
 	}
-	else
-	{
-		if (argc - optind != 1 || strlen(argv[optind]) != 1)
-			usage(progname);
-		if (!strchr("0123456789SsQqAaBbCcUu", argv[optind][0]))
-			usage(progname);
+	else {
+		if (argc - optind != 1 || strlen(argv[optind]) != 1)    usage(progname);
+		if (!strchr("0123456789SsQqAaBbCcUu", argv[optind][0])) usage(progname);
 		request.cmd = INIT_CMD_RUNLVL;
 		request.runlevel = argv[optind][0];
 		request.sleeptime = sleep_time;
 	}
-
 	/* Change to the root directory. */
-	if (0 != chdir("/"))
-		initlog(L_VB, "unable to chdir to /: %s",
-				strerror(errno));
+	if (0 != chdir("/")) initlog(L_VB, "unable to chdir to / : %s", strerror(errno));
 
 	/* Open the fifo and write a command. */
 	/* Make sure we don't hang on opening /run/initctl */
 	SETSIG(sa, SIGALRM, signal_handler, 0);
 	alarm(3);
-	if ((fd = open(INIT_FIFO, O_WRONLY)) >= 0)
-	{
+	if ((fd = open(INIT_FIFO, O_WRONLY)) >= 0) {
 		ssize_t p = 0;
 		size_t s = sizeof(request);
 		void *ptr = &request;
-
-		while (s > 0)
-		{
+		while (s > 0) {
 			p = write(fd, ptr, s);
-			if (p < 0)
-			{
-				if (errno == EINTR || errno == EAGAIN)
-					continue;
+			if (p < 0) {
+				if (errno == EINTR || errno == EAGAIN) continue;
 				break;
 			}
 			ptr += p;
@@ -2959,85 +2848,62 @@ x2init(char *progname,
 	}
 
 #ifdef TELINIT_USES_INITLVL
-	if (request.cmd == INIT_CMD_RUNLVL)
-	{
+	if (request.cmd == INIT_CMD_RUNLVL) {
 		/* Fallthrough to the old method. */
-
 		/* Now write the new runlevel. */
-		if ((fp = fopen(INITLVL, "w")) == NULL)
-		{
-			fprintf(stderr, "%s: cannot create %s\n",
-					progname, INITLVL);
+		if ((fp = fopen(INITLVL, "w")) == NULL) {
+			fprintf(stderr, "%s: cannot create %s\n", progname, INITLVL);
 			exit(1);
 		}
 		fprintf(fp, "%s %d", argv[optind], sleep_time);
 		fclose(fp);
-
 		/* And tell init about the pending runlevel change. */
-		if (kill(INITPID, SIGHUP) < 0)
-			perror(progname);
-
+		if (kill(INITPID, SIGHUP) < 0) perror(progname);
 		return 0;
 	}
 #endif
-
 	fprintf(stderr, "%s: ", progname);
-	if (ISMEMBER(got_signals, SIGALRM))
-	{
-		fprintf(stderr, "timeout opening/writing control channel %s\n",
-				INIT_FIFO);
-	}
-	else
-	{
-		perror(INIT_FIFO);
-	}
+	if (ISMEMBER(got_signals, SIGALRM)) 
+		fprintf(stderr, "timeout opening/writing control channel %s\n", INIT_FIFO);
+	else  perror(INIT_FIFO);
 	return 1;
 }
 
-int main(int argc, char **argv)
-{
+/* PRE BOOT OPERATIONS */
+int 
+main(int argc, char **argv) { 
 	char *p;
 	int f;
 	int isinit;
 #ifdef WITH_SELINUX
 	int enforce = 0;
 #endif
-
 	/* Get my own name */
-	if ((p = strrchr(argv[0], '/')) != NULL)
-		p++;
-	else
-		p = argv[0];
-	if ((argc == 2) && (!strcmp(argv[1], "--version")))
-	{
-		printf("x2-init version: %s\n\n", VERSION);
+	if 	((p = strrchr(argv[0], '/')) != NULL) p++;
+	else p = argv[0];
+	if 	( (argc == 2) && (!strcmp(argv[1], "--version")) 
+		|| (argc == 2) && (!strcmp(argv[1], "vers"    )) ) {
+		printf("x2-init version: 0.1 \n");
 		exit(0);
 	}
 	/* Common umask */
 	umask(umask(077) | 022);
 	/* Quick check */
-	if (geteuid() != 0)
-	{
+	if (geteuid() != 0) {
 		fprintf(stderr, "%s: must be doas/sudo/superuser.\n", p);
 		exit(1);
 	}
 	/* Is this x2init or init ? */
 	isinit = (getpid() == 1);
-	for (f = 1; f < argc; f++)
-	{
-		if (!strcmp(argv[f], "-i") || !strcmp(argv[f], "--init"))
-		{
+	for (f = 1; f < argc; f++) {
+		if (!strcmp(argv[f], "-i") || !strcmp(argv[f], "--init")) {
 			isinit = 1;
 			break;
 		}
 	}
-	if (!isinit)
-		exit(x2init(p, argc, argv));
-	/*
-	 *	Check for re-exec
-	 */
-	if (check_pipe(STATE_PIPE))
-	{
+	if (!isinit) exit(x2init(p, argc, argv));
+	/*	Check for re-exec */
+	if (check_pipe(STATE_PIPE)) {
 		receive_state(STATE_PIPE);
 		myname = istrdup(argv[0]);
 		argv0 = argv[0];
@@ -3074,19 +2940,14 @@ int main(int argc, char **argv)
 	}
 
 #ifdef WITH_SELINUX
-	if (getenv("SELINUX_INIT") == NULL)
-	{
-		if (is_selinux_enabled() != 1)
-		{
-			if (selinux_init_load_policy(&enforce) == 0)
-			{
+	if (getenv("SELINUX_INIT") == NULL) {
+		if (is_selinux_enabled() != 1) {
+			if (selinux_init_load_policy(&enforce) == 0) {
 				putenv("SELINUX_INIT=YES");
 				execv(myname, argv);
 			}
-			else
-			{
-				if (enforce > 0)
-				{
+			else {
+				if (enforce > 0) {
 					/* SELinux in enforcing mode but load_policy failed */
 					/* At this point, we probably can't open /dev/console, so log() won't work */
 					fprintf(stderr, "Unable to load SELinux Policy. Machine is in enforcing mode. Halting now.\n");

@@ -39,11 +39,7 @@ void print(char *fmt);
 /* from dowall.c */
 void wall(const char *text, int remote);
 
-#if DEBUG
-#  define INITDBG(level, fmt, args...) initlog(level, fmt, ##args)
-#else
-#  define INITDBG(level, fmt, args...)
-#endif
+#define INITDBG(level, fmt, args...) initlog(level, fmt, ##args)
 
 /* Actions to be taken by init */
 #define RESPAWN			1
@@ -56,11 +52,11 @@ void wall(const char *text, int remote);
 #define POWEROKWAIT		8
 #define CTRLALTDEL		9
 #define OFF		       10
-#define	ONDEMAND	       11
-#define	INITDEFAULT	       12
-#define SYSINIT		       13
-#define POWERFAILNOW           14
-#define KBREQUEST               15
+#define	ONDEMAND	   11
+#define	INITDEFAULT    12
+#define SYSINIT	       13
+#define POWERFAILNOW   14
+#define KBREQUEST      15
 
 /* Information about a process in the in-core inittab */
 typedef struct _child_ {
