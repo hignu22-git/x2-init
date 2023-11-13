@@ -2732,7 +2732,8 @@ is pressed, and that we want to handle keyboard signals. */
 				while ((rc = wait(&st)) != f) 
 					if (rc < 0 && errno == ECHILD) break;
 			} 	SETSIG(sa, SIGCHLD, chld_handler, SA_RESTART);
-		} /* Start normal boot procedure */
+		} 
+		/* Start normal boot procedure */
 		runlevel = '#';
 		read_inittab();
 	}
@@ -2890,7 +2891,7 @@ main(int argc, char **argv) {
 	umask(umask(077) | 022);
 	/* Quick check */
 	if (geteuid() != 0) {
-		fprintf(stderr, "%s: must be doas/sudo/superuser.\n", p);
+		fprintf(stderr, "%s: must be doas/sudo/su :( .\n", p);
 		exit(1);
 	}
 	/* Is this x2init or init ? */

@@ -1,13 +1,9 @@
+
+
 #
 # inittab	This file describes how the INIT process should set up
 #		the system in a certain run-level.
-#
-# Version:	@(#)inittab		2.04	17/05/93	MvS
-#                                       2.10    02/10/95        PV
-#                                       3.00    02/06/1999      PV
-#                                       4.00    04/10/2002      PV
-#                                      13.37    2011-03-25      PJV
-#
+#                                              +_ _ _ _ _ _ _+
 # Author:	Miquel van Smoorenburg, <miquels@drinkel.nl.mugnet.org>
 # Modified by:	Patrick J. Volkerding		  , <volkerdi@slackware.com> 
 # 		        Andre Bobrovskiy[hignu22-git] , <hianon228@yandex.fr>
