@@ -84,8 +84,7 @@ static void do_msleep(int msec)
 	struct timeval tv;
 	tv.tv_sec = msec / 1000;
 	tv.tv_usec = (msec % 1000) * 1000;
-	while (select(0, NULL, NULL, NULL, &tv) < 0 && errno == EINTR)
-		;
+	while (select(0, NULL, NULL, NULL, &tv) < 0 && errno == EINTR) ;
 }
 
 /* Non-failing allocation routines (init cannot fail). */
@@ -2773,7 +2772,7 @@ is pressed, and that we want to handle keyboard signals. */
 static void 
 usage(char *s){
 	fprintf(stderr, 
-		"Usage X2-INiT:\n command => %s{-e VAR[=VAL]|[-t SECONDS]{0|1|2|3|4|5|6|S|s|Q|q|A|a|B|b|C|c|U|u}}\n Autor : Andre Bobrovskiy [hignu22] \n\n", s);
+		"Usage X2-INiT:\n command => %s{-e VAR[=VAL]|[-t SECONDS]{0|1|2|3|4|5|6|S|s|Q|q|A|a|B|b|C|c|U|u}}\n AUTHOR: Andre Bobrovskiy [hignu22] \n\n", s);
 	exit(1);
 }
 static int

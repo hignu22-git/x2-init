@@ -4,41 +4,41 @@ body{
     padding-right: 140px;
     padding-left: 140px;
     padding-bottom: 100px;
-  }
+}
 
-  h2 {
+h2 {
     color : #fefefe;
-  }
+}
 
-  header{
+header{
     padding :8px;
     background-color: #fefefe ;
     border:2px solid #343434;
-  }
+}
 
-  main{
+main{
     background-color: #fefefe ;
     border:2px solid black;
     padding: 8px;
 
-  }
+}
 
-  a{
-    color:red;
+a{
+    color:blue;
     padding: 5px;
-  }
+}
 
-  .tb{
+.tb{
     color:#000;
     padding-left: 16px;
-  }
+}
 
-  footer{
+footer{
     background-color: #fefefe ;
     border:2px solid black;
     padding: 8px;
-  }
+}
   
-  h3 {
+h3 {
     padding:3px;
-  }
+}
