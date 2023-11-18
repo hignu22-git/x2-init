@@ -1475,7 +1475,7 @@ read_inittab(void) {
 		ch = imalloc(sizeof(CHILD)); /* -- Allocate the << CHILD >> struct */
 		ch->action = actionNo;
 		strncpy(ch->id, id, sizeof(utproto.ut_id) + 1); /* Hack for different libs. */
-		strncpy(ch->process, process, sizeof(ch->process) - 1);
+		strncpy(ch->process, process, sizeof(ch->process) - 1) ; 
 		if (rlevel[0]) {
 			for (f = 0; f < (int16_t)sizeof(rlevel) - 1 && rlevel[f]; f++) {
 				/* The loop is executed until f is equal to the size(bits) of rlevel */
