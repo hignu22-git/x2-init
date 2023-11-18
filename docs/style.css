@@ -6,14 +6,20 @@ body{
     padding-bottom: 100px;
 }
 
-h2 {
-    color : #fefefe;
-}
-
 header{
     padding :8px;
     background-color: #fefefe ;
     border:2px solid #343434;
+    width: 500px;
+    margin-left: 70px;
+}
+
+nav{
+    background-color: #fefefe ;
+    border:2px solid black;
+    padding: 8px;
+    margin-top: 15px;  
+    width: 100px;     
 }
 
 main{
@@ -23,8 +29,12 @@ main{
 
 }
 
+h2 {
+    color : #fefefe;
+}
+
 a{
-    color:blue;
+    color: black;
     padding: 5px;
 }
 
@@ -41,4 +51,14 @@ footer{
   
 h3 {
     padding:3px;
+}
+
+ul{
+    list-style-type: none;
+    margin: 0px;
+    padding: 0px;
+}
+
+li{
+    padding: 5px    ;
 }
