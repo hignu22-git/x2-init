@@ -99,15 +99,9 @@ struct { char *name; int mask; } flags[] = {
 CHILD *family = NULL;	 /* The linked list of all entries */
 CHILD *newFamily = NULL; /* The list after inittab re-read */
 
-CHILD ch_emerg = {/* Emergency shell */
-				  WAITING, 0, 0, 0, 0,
-				  "~~",
-				  "S",
-				  3,
-				  "/sbin/sulogin",
-				  NULL,
-				  NULL};
-
+CHILD ch_emerg = {/* Emergency shell */ WAITING, 0, 0, 0, 0, "~~", "S", 3,
+				  "/sbin/sulogin", NULL, NULL  
+				 };
 
 int main(int, char **);
 

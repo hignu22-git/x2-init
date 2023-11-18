@@ -9,17 +9,16 @@ body{
 header{
     padding :8px;
     background-color: #fefefe ;
-    border:2px solid #343434;
+    border:3px dashed #000;
     width: 500px;
     margin-left: 70px;
 }
 
 nav{
     background-color: #fefefe ;
-    border:2px solid black;
-    padding: 8px;
-    margin-top: 15px;  
-    width: 100px;     
+    border:2px solid #000;
+    padding: 7px;
+    margin-top: 15px;       
 }
 
 main{
@@ -34,8 +33,11 @@ h2 {
 }
 
 a{
-    color: black;
+    color: darkred;
     padding: 5px;
+    text-decoration: none !important;
+}a:hover{
+    color:darkblue;
 }
 
 .tb{

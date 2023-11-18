@@ -2,8 +2,8 @@
 
 # /etc/rc.d/rc.S:  System initialization script.
 #
-# Mostly written by:  Patrick J. Volkerding, <volkerdi@slackware.com>
-# Modified by  :      Andre Bobrowskiy     , <hianon228@yandex.fr>
+# Mostly written by : Patrick J. Volkerding, <volkerdi@slackware.com>
+# Modified by       : Andre Bobrowskiy     , <hianon228@yandex.fr>
 #
 
 PATH=/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin

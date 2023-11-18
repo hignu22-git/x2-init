@@ -15,15 +15,10 @@
 #define PATH_MAX 2048
 #endif
 
-int dostat(char *path, struct stat *st, int do_lstat, int quiet)
-{
+int dostat(char *path, struct stat *st, int do_lstat, int quiet) {
 	int		n;
-
-	if (do_lstat)
-		n = lstat(path, st);
-	else
-		n = stat(path, st);
-
+	if (do_lstat)	n = lstat(path, st);
+	else			n = stat(path, st);
 	if (n != 0) {
 		if (!quiet)
 			fprintf(stderr, "mountpoint: %s: %s\n", path,
@@ -40,8 +35,7 @@ This function checks to see if the passed path is listed in the
 be read, we return false. If the path is not found, we return false.
 If the path is found we return true.
 */
-int do_proc_check(char *path)
-{
+int do_proc_check(char *path) {
    FILE *mounts;
    char *found = NULL, *status;
    char *target_string;
@@ -49,12 +43,10 @@ int do_proc_check(char *path)
    int last_character;
 
    target_string = (char *) calloc( strlen(path) + 3, sizeof(char));
-   if (! target_string)
-      return 0;
+   if (! target_string) return 0;
 
    mounts = fopen("/proc/mounts", "r");
-   if (! mounts)
-   {
+   if (! mounts) {
       free(target_string);
       return 0;
    }
@@ -68,11 +60,9 @@ int do_proc_check(char *path)
 
    /* Search for path name in /proc/mounts file */
    status = fgets(line, 512, mounts);
-   while ( (status) && (! found) )
-   {
+   while ( (status) && (! found) ) {
        found = strstr(line, target_string);
-       if (! found)
-         status = fgets(line, 512, mounts);
+       if (! found) status = fgets(line, 512, mounts);
    }
    fclose(mounts);
    free(target_string);
@@ -87,14 +77,14 @@ void usage(void) {
 
 int main(int argc, char **argv)
 {
-	struct stat	st, st2;
-	char		buf[PATH_MAX + 1];
-	char		*path;
-	int		quiet = 0;
-	int		showdev = 0;
-	int		xdev = 0;
-	int		c, r;
-        int             check_proc = 0;
+	struct stat		st, st2;
+	char			buf[PATH_MAX + 1];
+	char			*path;
+	int				quiet = 0;
+	int				showdev = 0;
+	int				xdev = 0;
+	int				c, r;
+    int             check_proc = 0;
 
 	while ((c = getopt(argc, argv, "dpqx")) != EOF) switch(c) {
 		case 'd':

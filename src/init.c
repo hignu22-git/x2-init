@@ -1357,7 +1357,7 @@ read_inittab(void) {
 	sigset_t nmask, omask; 		/* For blocking SIGCHLD. */
 	char buf[256];		   		/* Line buffer */
 	char err[64];		   		/* Error message. */
-	char *id, *rlevel, *action, *process; /* Fields of a line */
+	char *id, *rlevel, *action, *process; 		/* Fields of a line */
 	char *p;
 	int lineNo = 0;			   	/* Line number in INITTAB file */
 	int actionNo;			   	/* Decoded action field */
@@ -1487,7 +1487,7 @@ read_inittab(void) {
 			if (ISPOWER(ch->action)) strcpy(ch->rlevel, "S0123456789");
 		}
 		/*	We have the fake runlevel '#' for SYSINIT  and '*' for BOOT and BOOTWAIT. */
-		if (ch->action == SYSINIT) 							strcpy(ch->rlevel, "#");
+		if (ch->action == SYSINIT )							strcpy(ch->rlevel, "#");
 		if (ch->action == BOOT || ch->action == BOOTWAIT) 	strcpy(ch->rlevel, "*");
 		/*	Now add it to the linked list. Special for powerfail. */
 		if (ISPOWER(ch->action)) {
@@ -1533,8 +1533,7 @@ read_inittab(void) {
 	check_kernel_console();
 #endif
 
-	/*	Loop through the list of children, and see if they need to
-	 *	be killed. */
+	/*	Loop through the list of children, and see if they need to be killed. */
 
 	INITDBG(L_VB, "Checking for children to kill");
 	for (round = 0; round < 2; round++) {
@@ -1551,8 +1550,7 @@ read_inittab(void) {
 			if (ch->new && ch->action != ch->new->action) ch->flags |= KILLME;
 			/*	Only BOOT processes may live in all levels */
 			if (ch->action != BOOT && strchr(ch->rlevel, runlevel) == NULL) {
-				/*	Ondemand procedures live always,
-				 *	except in single user   */
+				/*	Ondemand procedures live always, except in single user   */
 				if (runlevel == 'S' || !(ch->flags & DEMAND)) ch->flags |= KILLME;
 			}
 			/* Now, if this process may live note so in the new list */
@@ -1594,11 +1592,8 @@ read_inittab(void) {
 					if (!(ch->flags & KILLME)) 							continue;
 					if ((ch->flags & RUNNING) && !(ch->flags & ZOMBIE)) break;
 				}
-				if (ch == NULL)
-				{
-					/*
-					 *	No running children, skip SIGKILL
-					 */
+				if (ch == NULL) {
+					/*	No running children, skip SIGKILL */
 					round = 1;
 					foundOne = 0; /* Skip the sleep below. */
 					break;
