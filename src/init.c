@@ -79,8 +79,7 @@ extern char **environ;
 /*  Sleep a number of milliseconds.
  *	This only works correctly because Linux select updates
  *	the elapsed time in the struct timeval passed to select! */
-static void do_msleep(int msec)
-{
+static void do_msleep(int msec) {
 	struct timeval tv;
 	tv.tv_sec = msec / 1000;
 	tv.tv_usec = (msec % 1000) * 1000;
@@ -97,8 +96,7 @@ static void *imalloc(size_t size) {
 	return m;
 }
 
-static char *istrdup(const char *s)
-{
+static char *istrdup(const char *s) {
 	char *m;
 	int l;
 	l = strlen(s) + 1;
@@ -178,21 +176,16 @@ static int get_string(char *p, int size, FILE *f)
 /*
  *	Read trailing data from the state pipe until we see a newline.
  */
-static int get_void(FILE *f)
-{
+static int get_void(FILE *f) {
 	int c;
-
-	while ((c = getc(f)) != EOF && c != '\n')
-		;
-
+	while ((c = getc(f)) != EOF && c != '\n') ;
 	return (c != EOF);
 }
 
 /*
  *	Read the next "command" from the state pipe.
  */
-static int get_cmd(FILE *f)
-{
+static int get_cmd(FILE *f) {
 	char cmd[4] = "   ";
 	int i;
 
@@ -207,8 +200,7 @@ static int get_cmd(FILE *f)
 /*
  *	Read a CHILD * from the state pipe.
  */
-static CHILD *get_record(FILE *f)
-{
+static CHILD *get_record(FILE *f) {
 	int cmd;
 	char s[32];
 	int i;
@@ -413,41 +405,32 @@ setproctitle(char *fmt, ...)
 /*
  *	Set console_dev to a working console.
  */
-static void console_init(void)
-{
+static void console_init(void) {
 	int fd;
 	int tried_devcons = 0;
 	int tried_vtmaster = 0;
 	char *s;
 
-	if ((s = getenv("CONSOLE")) != NULL)
-		console_dev = s;
-	else
-	{
+	if ((s = getenv("CONSOLE")) != NULL)		console_dev = s;
+	else {
 		console_dev = CONSOLE;
 		tried_devcons++;
 	}
-
-	while ((fd = open(console_dev, O_RDONLY | O_NONBLOCK)) < 0)
-	{
-		if (!tried_devcons)
-		{
+	while ((fd = open(console_dev, O_RDONLY | O_NONBLOCK)) < 0)	{
+		if (!tried_devcons)	{
 			tried_devcons++;
 			console_dev = CONSOLE;
 			continue;
 		}
-		if (!tried_vtmaster)
-		{
+		if (!tried_vtmaster) {
 			tried_vtmaster++;
 			console_dev = VT_MASTER;
 			continue;
 		}
 		break;
 	}
-	if (fd < 0)
-		console_dev = "/dev/null";
-	else
-		close(fd);
+	if (fd < 0)		console_dev = "/dev/null";
+	else			close(fd);
 }
 
 /*
@@ -633,8 +616,7 @@ static
 {
 	int saved_errno = errno;
 
-	initlog(L_VB,
-			"PANIC: segmentation violation! sleeping for 30 seconds.");
+	initlog(L_VB, "PANIC: segmentation violation! sleeping for 30 seconds.");
 	coredump();
 	do_msleep(LONG_SLEEP);
 	errno = saved_errno;
@@ -670,8 +652,7 @@ static void console_stty(void)
 	struct termios tty;
 	int fd;
 
-	if ((fd = console_open(O_RDWR | O_NOCTTY)) < 0)
-	{
+	if ((fd = console_open(O_RDWR | O_NOCTTY)) < 0) {
 		initlog(L_VB, "can't open %s", console_dev);
 		return;
 	}
@@ -793,14 +774,14 @@ initlog(int loglevel, char *s, ...)  {
 		 *	Block signals while talking to syslog. */
 		sigfillset(&nmask);
 		sigprocmask(SIG_BLOCK, &nmask, &omask);
-		openlog("init", 0, LOG_DAEMON);
+		openlog("x2-init", 0, LOG_DAEMON);
 		syslog(LOG_INFO, "%s", buf);
 		closelog();
 		sigprocmask(SIG_SETMASK, &omask, NULL);
 	} 
 	/*	And log to the console. */
 	if (loglevel & L_CO) {
-		print("\rINIT: ");
+		print("\rX2-INiT => ");
 		print(buf);
 		print("\r\n");
 	}   
