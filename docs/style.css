@@ -18,7 +18,9 @@ nav{
     background-color: #fefefe ;
     border:2px solid #000;
     padding: 7px;
-    margin-top: 15px;       
+    margin-top: 15px;  
+    width: 850px;  
+    margin-left: 250px;   
 }
 
 main{
@@ -36,7 +38,9 @@ a{
     color: darkred;
     padding: 5px;
     text-decoration: none !important;
-}a:hover{
+}
+
+a:hover{
     color:darkblue;
 }
 
@@ -49,18 +53,18 @@ footer{
     background-color: #fefefe ;
     border:2px solid black;
     padding: 8px;
+    width: 1000px;
+    margin-left: 100px;
 }
   
 h3 {
     padding:3px;
 }
 
-ul{
-    list-style-type: none;
-    margin: 0px;
-    padding: 0px;
-}
-
-li{
-    padding: 5px    ;
+.INFO{
+    width: 1000px;
+    background-color: #fefefe ;
+    border:2px solid black;
+    padding: 8px;
+    margin-left: 100px;
 }
