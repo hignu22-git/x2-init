@@ -75,8 +75,8 @@ void usage(void) {
 	exit(1);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
+	
 	struct stat		st, st2;
 	char			buf[PATH_MAX + 1];
 	char			*path;
@@ -86,28 +86,17 @@ int main(int argc, char **argv)
 	int				c, r;
     int             check_proc = 0;
 
-	while ((c = getopt(argc, argv, "dpqx")) != EOF) switch(c) {
-		case 'd':
-			showdev = 1;
-			break;
-                case 'p':
-                        check_proc = 1;
-                        break;
-		case 'q':
-			quiet = 1;
-			break;
-		case 'x':
-			xdev = 1;
-			break;
-		default:
-			usage();
-			break;
+	while ((c = getopt(argc, argv, "dpqx")) != EOF) { 
+		if		(c == 'd' ) showdev = 1		;
+		else if	(c == 'p' ) check_proc = 1 	;
+		else if (c == 'q' ) quiet = 1 		;
+		else if (c == 'x' ) xdev  = 1 		;
+		else usage() ;  
 	}
-	if (optind != argc - 1) usage();
-	path = argv[optind];
 
-	if (dostat(path, &st, !xdev, quiet) < 0)
-		return 1;
+	if (optind != argc - 1) usage(); /* if there are no arguments / wenn es keine Argumente gibt */
+	path = argv[optind];
+	if (dostat(path, &st, !xdev, quiet) < 0) return 1;
 
 	if (xdev) {
 #ifdef __linux__
@@ -116,11 +105,8 @@ int main(int argc, char **argv)
 		if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode))
 #endif
 		{
-			if (quiet)
-				printf("\n");
-			else
-			fprintf(stderr, "mountpoint: %s: not a block device\n",
-				path);
+			if (quiet)		printf("\n");
+			else 			fprintf(stderr, "slackmpoint: %s: not a block device\n",path);
 			return 1;
 		}
 		printf("%u:%u\n", major(st.st_rdev), minor(st.st_rdev));
@@ -128,9 +114,7 @@ int main(int argc, char **argv)
 	}
 
 	if (!S_ISDIR(st.st_mode)) {
-		if (!quiet)
-			fprintf(stderr, "mountpoint: %s: not a directory\n",
-				path);
+		if (!quiet) 		fprintf(stderr, "mountpoint: %s: not a directory\n", path);
 		return 1;
 	}
 

@@ -1,11 +1,3 @@
-/*  slackmpoint - see if a directory or file is a mount point .  \
-    also a minimalistic replacement for the standard mountpoint from SystemV .
-    #################################################################
-    Writen by => Andre Bobrovskiy [hignu22-git] <hianon228@yandex.fr>
-
-    GNU's not Unix & Keep It Simple ,Stupid & Keep It Short and Simple !!
-*/
-
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -23,22 +15,68 @@
 #define PATH_MAX 2048
 #endif
 
-static int 
-dostat(char *path, struct stat *st, int do_lstat, int quiet) {
+int dostat(char *path, struct stat *st, int do_lstat, int quiet) {
 	int		n;
 	if (do_lstat)	n = lstat(path, st);
 	else			n = stat(path, st);
 	if (n != 0) {
-		if (!quiet) fprintf(stderr, "slackmpoint: %s: %s\n", path, strerror(errno));
+		if (!quiet)
+			fprintf(stderr, "mountpoint: %s: %s\n", path,
+				strerror(errno));
 		return -1;
 	}
 	return 0;
 }
 
 
-/* MAIN FUNCTION */
-int 
-main(int argc, char **argv) {
+/*
+This function checks to see if the passed path is listed in the
+/proc/mounts file. If /proc/mounts does not exist or cannot
+be read, we return false. If the path is not found, we return false.
+If the path is found we return true.
+*/
+int do_proc_check(char *path) {
+   FILE *mounts;
+   char *found = NULL, *status;
+   char *target_string;
+   char line[512];
+   int last_character;
+
+   target_string = (char *) calloc( strlen(path) + 3, sizeof(char));
+   if (! target_string) return 0;
+
+   mounts = fopen("/proc/mounts", "r");
+   if (! mounts) {
+      free(target_string);
+      return 0;
+   }
+
+   /* copy path so we can adjust it without harming the original */
+   sprintf(target_string, "%s", path);
+   /* trim trailing slash */
+   last_character = strlen(target_string) - 1;
+   if ( (last_character >= 1) && (target_string[last_character] == '/') )
+        target_string[last_character] = '\0';
+
+   /* Search for path name in /proc/mounts file */
+   status = fgets(line, 512, mounts);
+   while ( (status) && (! found) ) {
+       found = strstr(line, target_string);
+       if (! found) status = fgets(line, 512, mounts);
+   }
+   fclose(mounts);
+   free(target_string);
+   return found ? 1 : 0;
+}
+
+
+void usage(void) {
+	fprintf(stderr, "Usage: mountpoint [-p] [-q] [-d] [-x] path\n");
+	exit(1);
+}
+
+int main(int argc, char **argv)
+{
 	struct stat		st, st2;
 	char			buf[PATH_MAX + 1];
 	char			*path;
@@ -53,8 +91,8 @@ main(int argc, char **argv) {
 			showdev = 1;
 			break;
                 case 'p':
-                    check_proc = 1;
-                    break;
+                        check_proc = 1;
+                        break;
 		case 'q':
 			quiet = 1;
 			break;
