@@ -1,0 +1,39 @@
+body{
+    color: #000;
+}
+
+header{
+    background-color: #fefefe ;
+    border:3px dashed #000; 
+}
+
+nav{
+    background-color: #fefefe ;
+    border:2px dashed #000;
+}
+
+h2{
+    color: #fefefe;
+}
+
+a{
+    color: darkred;
+}
+
+a:hover{
+    color: darkblue;
+}
+
+.tb{
+    color: #000;
+}
+
+footer{
+    background-color: #fefefe ;
+    border:2px solid black;
+}
+
+.INFO{
+    background-color: #fefefe ;
+    border:2px solid black;
+}

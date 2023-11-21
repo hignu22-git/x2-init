@@ -1,3 +1,7 @@
+html{
+    overflow: hidden;
+}
+
 body{
     color : #000;
     padding-top: 100px;
@@ -21,13 +25,6 @@ nav{
     margin-top: 15px;    
     margin-left : 400px;
     margin-right: 200px;   
-}
-
-main{
-    background-color: #fefefe ;
-    border:2px solid black;
-    padding: 8px;
-
 }
 
 h2 {
