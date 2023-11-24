@@ -1452,7 +1452,8 @@ read_inittab(void) {
 				initlog(L_VB, "%s[%d]: duplicate ID field \"%s\"", INITTAB, lineNo, id);
 				break;
 			}
-		}	if (old) continue;
+		}	
+		if (old) continue;
 		ch = imalloc(sizeof(CHILD)); /* -- Allocate the << CHILD >> struct */
 		ch->action = actionNo;
 		strncpy(ch->id, id, sizeof(utproto.ut_id) + 1); /* Hack for different libs. */
@@ -1467,9 +1468,8 @@ read_inittab(void) {
 			strcpy(ch->rlevel, "0123456789");
 			if (ISPOWER(ch->action)) strcpy(ch->rlevel, "S0123456789");
 		}
-		/*	We have the fake runlevel '#' for SYSINIT  and '*' for BOOT and BOOTWAIT. */
-		if (ch->action == SYSINIT )							strcpy(ch->rlevel, "#");
-		if (ch->action == BOOT || ch->action == BOOTWAIT) 	strcpy(ch->rlevel, "*");
+		if (ch->action == SYSINIT )							strcpy(ch->rlevel, RSYSINIT	);
+		if (ch->action == BOOT || ch->action == BOOTWAIT) 	strcpy(ch->rlevel, RBOOT	);
 		/*	Now add it to the linked list. Special for powerfail. */
 		if (ISPOWER(ch->action)) {
 			/*	Disable by default */
@@ -1515,15 +1515,13 @@ read_inittab(void) {
 #endif
 
 	/*	Loop through the list of children, and see if they need to be killed. */
-
 	INITDBG(L_VB, "Checking for children to kill");
 	for (round = 0; round < 2; round++) {
 		talk = 1;
 		for (ch = family; ch; ch = ch->next) {
 			ch->flags &= ~KILLME;
-			/*	Is this line deleted ? */
-			if (ch->new == NULL) ch->flags |= KILLME;
-			/*	If the entry has changed, kill it anyway. Note that
+			if (ch->new == NULL) ch->flags |= KILLME; /* Is this line deleted ? */
+ 			/*	If the entry has changed, kill it anyway. Note that
 			 *	we do not check ch->process, only the "action" field.
 			 *	This way, you can turn an entry "off" immediately, but
 			 *	changes in the command line will only become effective
@@ -1547,43 +1545,36 @@ read_inittab(void) {
 				continue;
 			}
 			INITDBG(L_VB, "Killing \"%s\"", ch->process);
-			switch (round) {
-			case 0: /* Send TERM signal */
+			if (round == 0 ) {		
+				/* Send TERM signal */
 				if (talk)
 					initlog(L_CO,"Sending processes configured via /etc/inittab the TERM signal");
 				kill(-(ch->pid), SIGTERM);
 				foundOne = 1;
-				break;
-			case 1: /* Send KILL signal and collect status */
+				/*	See if we have to wait sleep_time seconds */
+				if (foundOne) {
+					for (f = 0; f < 100 * sleep_time; f++){
+						for (ch = family; ch; ch = ch->next){
+							if (!(ch->flags & KILLME)) 							continue;
+							if ((ch->flags & RUNNING) && !(ch->flags & ZOMBIE)) break;
+						}
+						if (ch == NULL) {
+							round = 1;
+							foundOne = 0; 
+							break;
+						}
+						do_msleep(MINI_SLEEP);
+					}
+				}		
+			}
+			else if (round == 1) {	/* Send KILL signal and collect status */
 				if (talk)
 					initlog(L_CO,"Sending processes configured via /etc/inittab the KILL signal");
 				kill(-(ch->pid), SIGKILL);
-				break;
 			}
 			talk = 0;
 		}
-		/*	See if we have to wait sleep_time seconds */
-		if (foundOne && round == 0) {
-			/*
-			 *	Yup, but check every 10 milliseconds if we still have children.
-			 *      The f < 100 * sleep_time refers to sleep time in 10 millisecond chunks.
-			 */
-			for (f = 0; f < 100 * sleep_time; f++){
-				for (ch = family; ch; ch = ch->next){
-					if (!(ch->flags & KILLME)) 							continue;
-					if ((ch->flags & RUNNING) && !(ch->flags & ZOMBIE)) break;
-				}
-				if (ch == NULL) {
-					/*	No running children, skip SIGKILL */
-					round = 1;
-					foundOne = 0; /* Skip the sleep below. */
-					break;
-				}
-				do_msleep(MINI_SLEEP);
-			}
-		}
 	}
-
 	/*	Now give all processes the chance to die and collect exit statuses. */
 	if (foundOne)	do_msleep(MINI_SLEEP);
 	for (ch = family; ch; ch = ch->next) {
@@ -1638,8 +1629,7 @@ read_inittab(void) {
  *	The entries that do not belong here at all are removed
  *	from the list.
  */
-static void start_if_needed(void)
-{
+static void start_if_needed(void)	{
 	CHILD *ch;	/* Pointer to child */
 	int delete; /* Delete this entry from list? */
 

@@ -58,6 +58,9 @@ void wall(const char *text, int remote);
 #define POWERFAILNOW   14
 #define KBREQUEST      15
 
+#define RBOOT          "#"
+#define RSYSINIT       "*"
+
 /* Information about a process in the in-core inittab */
 typedef struct _child_ {
     int flags;			/* Status of this entry */
