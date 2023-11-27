@@ -5,11 +5,13 @@ body{
 header{
     background-color: #fefefe ;
     border:3px dashed #000; 
+    box-shadow: 0 0 10px rgba(39,38,40,0.4);
 }
 
 nav{
     background-color: #fefefe ;
     border:2px dashed #000;
+    box-shadow: 0 0 10px rgba(39,38,40,0.4);
 }
 
 h2{
@@ -31,9 +33,24 @@ a:hover{
 footer{
     background-color: #fefefe ;
     border:2px solid black;
+    box-shadow: 0 0 10px rgba(39,38,40,0.4);
 }
 
 .INFO{
     background-color: #fefefe ;
     border:2px solid black;
+    box-shadow: 0 0 10px rgba(39,38,40,0.4);
+}
+
+.theme{
+    background: #ffffff;
+    box-shadow: 0 0 10px rgba(39,38,40,0.4);
+}
+
+.changeTheme[data-theme = "dark"]{
+    display: block;
+}
+
+.changeTheme[data-theme = "light"]{
+    display: none;
 }
