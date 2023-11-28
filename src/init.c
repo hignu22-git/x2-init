@@ -875,8 +875,8 @@ void init_freeenv(char **e)
  *	This function is too long and indents too deep.
  *
  */
-static pid_t spawn(CHILD *ch, int *res)
-{
+static pid_t 
+spawn(CHILD *ch, int *res) {
 	char *args[16];			  /* Argv array */
 	char buf[136];			  /* Line buffer */
 	int f, st;				  /* Scratch variables */
@@ -892,8 +892,7 @@ static pid_t spawn(CHILD *ch, int *res)
 	buf[sizeof(buf) - 1] = 0;
 
 	/* Skip '+' if it's there */
-	if (proc[0] == '+')
-		proc++;
+	if (proc[0] == '+')	proc++;
 
 	ch->flags |= XECUTED;
 
@@ -1200,20 +1199,12 @@ static pid_t spawn(CHILD *ch, int *res)
 	}
 }
 
-/*
- *	Start a child running!
- */
+/*	Start a child running! */
 static void startup(CHILD *ch)
 {
-	/*
-	 *	See if it's disabled
-	 */
-	if (ch->flags & FAILING)
-		return;
-
-	switch (ch->action)
-	{
-
+	/* See if it's disabled */
+	if (ch->flags & FAILING)	return;
+	switch (ch->action)	{
 	case SYSINIT:
 	case BOOTWAIT:
 	case WAIT:
@@ -1221,16 +1212,12 @@ static void startup(CHILD *ch)
 	case POWERFAILNOW:
 	case POWEROKWAIT:
 	case CTRLALTDEL:
-		if (!(ch->flags & XECUTED))
-			ch->flags |= WAITING;
-		/* Fall through */
+		if (!(ch->flags & XECUTED))	ch->flags |= WAITING;
 	case KBREQUEST:
 	case BOOT:
 	case POWERFAIL:
 	case ONCE:
-		if (ch->flags & XECUTED)
-			break;
-		/* Fall through */
+		if (ch->flags & XECUTED)	break;
 	case ONDEMAND:
 	case RESPAWN:
 		ch->flags |= RUNNING;
@@ -1240,27 +1227,18 @@ static void startup(CHILD *ch)
 }
 
 #ifdef __linux__
-static void check_kernel_console()
-{
+static void check_kernel_console()	{
 	FILE *fp;
 	char buf[4096];
-	if ((fp = fopen("/proc/cmdline", "r")) == 0)
-	{
-		return;
-	}
-	if (fgets(buf, sizeof(buf), fp))
-	{
+	if ((fp = fopen("/proc/cmdline", "r")) == 0) return;
+	if (fgets(buf, sizeof(buf), fp))	{
 		char *p = buf;
-		if (strstr(p, "init.autocon=1"))
-		{
-			while ((p = strstr(p, "console=")))
-			{
+		if (strstr(p, "init.autocon=1"))	{
+			while ((p = strstr(p, "console=")))	{
 				char *e;
 				p += strlen("console=");
-				for (e = p; *e; ++e)
-				{
-					switch (*e)
-					{
+				for (e = p; *e; ++e)	{
+					switch (*e)	{
 					case '-' ... '9':
 					case 'A' ... 'Z':
 					case '_':
@@ -1269,52 +1247,37 @@ static void check_kernel_console()
 					}
 					break;
 				}
-				if (p != e)
-				{
+				if (p != e)	{
 					CHILD *old;
 					int dup = 0;
 					char id[8] = {0};
 					char dev[32] = {0};
 					strncpy(dev, p, MIN(sizeof(dev), (unsigned)(e - p)));
-					if (!strncmp(dev, "tty", 3))
-						strncpy(id, dev + 3, sizeof(id));
-					else
-						strncpy(id, dev, sizeof(id));
-
-					for (old = newFamily; old; old = old->next)
-					{
-						if (!strcmp(old->id, id))
-						{
-							dup = 1;
-						}
+					if (!strncmp(dev, "tty", 3))	strncpy(id, dev + 3, sizeof(id));
+					else							strncpy(id, dev, sizeof(id));
+					for (old = newFamily; old; old = old->next)	{
+						if (!strcmp(old->id, id))	dup = 1;
 					}
-					if (!dup)
-					{
+					if (!dup) {
 						CHILD *ch = imalloc(sizeof(CHILD));
 						ch->action = RESPAWN;
 						strcpy(ch->id, id);
 						strcpy(ch->rlevel, "2345");
 						sprintf(ch->process, "/sbin/agetty -L -s 115200,38400,9600 %s vt102", dev);
 						ch->next = NULL;
-						for (old = family; old; old = old->next)
-						{
-							if (strcmp(old->id, ch->id) == 0)
-							{
+						for (old = family; old; old = old->next)	{
+							if (strcmp(old->id, ch->id) == 0)		{
 								old->new = ch;
 								break;
 							}
 						}
 						/* add to end */
-						for (old = newFamily; old; old = old->next)
-						{
-							if (!old->next)
-							{
+						for (old = newFamily; old; old = old->next)	{
+							if (!old->next)	{
 								old->next = ch;
 								break;
 							}
-						}
-
-						initlog(L_VB, "added agetty on %s with id %s", dev, id);
+						}	initlog(L_VB, "added agetty on %s with id %s", dev, id);
 					}
 				}
 			}
@@ -1350,8 +1313,7 @@ read_inittab(void) {
 		0 inittab done, 1 inittab and inittab.d done */
 	DIR *tabdir = NULL;		   	/* the rc.d dir */
 	struct dirent *file_entry; 	/* rc.d entry */
-	char f_name[272];		   	/* size d_name + strlen /etc/rc.d/ */
-
+	char f_name[272];		   	/* size d_name + strlen /etc/rc.d/ */ 
 	CHILD *ch, *old, *i; 		/* Pointers to CHILD structure */
 
 #if DEBUG
@@ -1425,10 +1387,12 @@ read_inittab(void) {
 		if (!action || !*action)	strcpy(err, "missing action field");
 		if (id && strlen(id) > sizeof(utproto.ut_id)) 
 			sprintf(err, "id field too long (max %d characters)", (int)sizeof(utproto.ut_id));
-		if (rlevel  && strlen(rlevel) > 11) strcpy(err, "rlevel field too long (max 11 characters)");
-		if (process && strlen(process)>127) strcpy(err,"process field too long (max 127 characters)");
-		if (action  && strlen(action) > 32) strcpy(err, "action field too long");
-		/* err [0] != 0  */
+		if (rlevel  && strlen(rlevel) > 11) 
+			strcpy(err, "rlevel field too long (max 11 characters)");
+		if (process && strlen(process)>127) 
+			strcpy(err,"process field too long (max 127 characters)");
+		if (action  && strlen(action) > 32) 
+			strcpy(err, "action field too long");
 		if (err[0] != 0) {
 			initlog(L_VB, " %s[%d]: %s ", INITTAB, lineNo, err);
 			INITDBG(L_VB, "%s:%s:%s:%s", id, rlevel, action, process);
@@ -1460,7 +1424,6 @@ read_inittab(void) {
 		strncpy(ch->process, process, sizeof(ch->process) - 1) ; 
 		if (rlevel[0]) {
 			for (f = 0; f < (int16_t)sizeof(rlevel) - 1 && rlevel[f]; f++) {
-				/* The loop is executed until f is equal to the size(bits) of rlevel */
 				ch->rlevel[f] = rlevel[f] ;
 				if (ch->rlevel[f] == 's') ch->rlevel[f] = 'S'; /* if small key-register */
 			} strncpy(ch->rlevel, rlevel, sizeof(ch->rlevel) - 1);
@@ -1490,12 +1453,11 @@ read_inittab(void) {
 				newFamily = ch;
 				if (ch->next == NULL) head = ch;
 			}
-		} else {
-			/*	Just add at end of the list */
+		} else {	/*	Just add at end of the list */
 			if (ch->action == KBREQUEST)	ch->flags |= XECUTED;
 			ch->next = NULL;
-			if (head)  						head->next = ch;
-			else 							newFamily = ch;
+			if (head)  	head->next = ch;
+			else 		newFamily = ch;
 			head = ch;
 		}
 		/*	Walk through the old list comparing id fields */
@@ -1571,20 +1533,18 @@ read_inittab(void) {
 				if (talk)
 					initlog(L_CO,"Sending processes configured via /etc/inittab the KILL signal");
 				kill(-(ch->pid), SIGKILL);
-			}
-			talk = 0;
+			}	talk = 0;
 		}
 	}
 	/*	Now give all processes the chance to die and collect exit statuses. */
 	if (foundOne)	do_msleep(MINI_SLEEP);
 	for (ch = family; ch; ch = ch->next) {
 		if (ch->flags & KILLME) {
-			if (!(ch->flags & ZOMBIE)) 
-				initlog(L_CO, "Pid %d [id %s] seems to hang", ch->pid, ch->id);
+			if (!(ch->flags & ZOMBIE)) initlog(L_CO, "Pid %d [id %s] seems to hang", ch->pid, ch->id);
 			else {
-				INITDBG(L_VB, "Updating utmp for pid %d [id %s]",ch->pid, ch->id);
+				INITDBG(L_VB, "Updating utmp for pid %d[id %s]",ch->pid, ch->id);
 				ch->flags &= ~RUNNING;
-				if (ch->process[0] != '+')
+				if (ch->process[0] != '+')	
 					write_utmp_wtmp("", ch->id, ch->pid, DEAD_PROCESS, NULL);
 			}
 		}
@@ -1634,48 +1594,35 @@ static void start_if_needed(void)	{
 	int delete; /* Delete this entry from list? */
 
 	INITDBG(L_VB, "Checking for children to start");
-
-	for (ch = family; ch; ch = ch->next)
-	{
+	for (ch = family; ch; ch = ch->next)	{
 
 #if DEBUG
-		if (ch->rlevel[0] == 'C')
-		{
+		if (ch->rlevel[0] == 'C')	
 			INITDBG(L_VB, "%s: flags %d", ch->process, ch->flags);
-		}
 #endif
 
 		/* Are we waiting for this process? Then quit here. */
-		if (ch->flags & WAITING)
-			break;
-
+		if (ch->flags & WAITING)	break;
 		/* Already running? OK, don't touch it */
-		if (ch->flags & RUNNING)
-			continue;
+		if (ch->flags & RUNNING)	continue;
 
 		/* See if we have to start it up */
 		delete = 1;
 		if (strchr(ch->rlevel, runlevel) ||
-			((ch->flags & DEMAND) && !strchr("#*Ss", runlevel)))
-		{
+			((ch->flags & DEMAND) && !strchr("#*Ss", runlevel))) {
 			startup(ch);
 			delete = 0;
 		}
-
-		if (delete)
-		{
+		if (delete)	{
 			/* is this OK? */
 			ch->flags &= ~(RUNNING | WAITING);
 			if (!ISPOWER(ch->action) && ch->action != KBREQUEST)
 				ch->flags &= ~XECUTED;
 			ch->pid = 0;
-		}
-		else
+		}	else
 			/* Do we have to wait for this process? */
-			if (ch->flags & WAITING)
-				break;
+			if (ch->flags & WAITING)	break;
 	}
-	/* Done. */
 }
 
 /*

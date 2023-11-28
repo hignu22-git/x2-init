@@ -63,17 +63,17 @@ void wall(const char *text, int remote);
 
 /* Information about a process in the in-core inittab */
 typedef struct _child_ {
-    int flags;			/* Status of this entry */
-    int exstat;			/* Exit status of process */
-    int pid;			/* Pid of this process */
-    time_t tm;			/* When respawned last */
-    int count;			/* Times respawned in the last 2 minutes */
-    char id[8];			/* Inittab id (must be unique) */
-    char rlevel[12];		/* run levels */
-    int action;			/* what to do (see list below) */
+    int flags;			    /* Status of this entry */
+    int exstat;			    /* Exit status of process */
+    int pid;			    /* Pid of this process */
+    time_t tm;			    /* When respawned last */
+    int count;			    /* Times respawned in the last 2 minutes */
+    char id[8];			    /* Inittab id (must be unique) */
+    char rlevel[12];	    /* run levels */
+    int action;			    /* what to do (see list below) */
     char process[128];		/* The command line */
-    struct _child_ *new;		/* New entry (after inittab re-read) */
-    struct _child_ *next;		/* For the linked list */
+    struct _child_ *new;	/* New entry (after inittab re-read) */
+    struct _child_ *next;	/* For the linked list */
 } CHILD;
 
 
