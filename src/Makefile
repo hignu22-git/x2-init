@@ -52,7 +52,7 @@ endif
 
 ifeq ($(MNTPOINT),yes)
 BIN	+= mountpoint
-BIN += slackmpoint
+MAN1	+= mountpoint.1
 endif
 
 MANPAGES:=$(MAN1) $(MAN5) $(MAN8)
@@ -120,9 +120,6 @@ mesg:		mesg.o
 
 mountpoint:	LDLIBS += $(STATIC)
 mountpoint:	mountpoint.o
-
-slackmpoint:	LDLIBS += $(STATIC)
-slackmpoint:	slackmpoint.o   
 
 utmpdump:	LDLIBS += $(STATIC)
 utmpdump:	utmpdump.o
