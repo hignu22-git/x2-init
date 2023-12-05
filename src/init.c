@@ -2879,7 +2879,7 @@ main(int argc, char **argv) {
 	else p = argv[0];
 	if 	( (argc == 2) && (!strcmp(argv[1], "--version")) 
 		|| (argc == 2) && (!strcmp(argv[1], "vers"    )) ) {
-		printf("x2-init version: 0.1 \n");
+		printf("x2-init version: base03 \n");
 		exit(0);
 	}
 	/* Common umask */
