@@ -24,8 +24,7 @@
         <a href="install.htm"> Guides </a> </li>
         <a href="https://github.com/hignu22-git/x2-init/blob/main/LICENSE"> GPL3 LICENSE </a></li>
         <a href="https://www.slackware.com">Slackware official site</a>
-        <a href="inittab-s.htm">Documentation for config-files</a>
-        <a href="">Prapadanda</a>
+        <a href="">Download 64bit iso image (slackware x2init version)</a>
         </strong>
       </center>
     </nav>
@@ -47,9 +46,22 @@
         TASKS => :
       </h4>
       <div class="tb"> 
-         1 => rewrite function - read_inittab()<br/>
-         2 => deleting rc.S, thereby increasing the speed and security of the download, make it more flexible and standardize the whole process<br/> 
-        +--------------------------+<br/>     
+         1 => + base config-tool<br/>
+         2 => finish testing the slackware+x2init image and open access to it<br/> 
+         +--------------------------+<br/>     
+      </div>
+    </div> <br/>
+    <div class="INFO">
+      <h4>
+        BASE INSTALL IN SYSTEM (other guides in the guides tab)  => :
+      </h4>
+      <div class="tb"> 
+        $ sudo -i<br/>
+        $ cd path/to/x2-init/src<br/>
+        $ make clean install $$ sh rmCompile.sh<br/>
+        +--------------------------+<br/> 
+        <i>For install rc.d base </i> <br/>
+        $ cd ../cfg-def-s/ && sh install.sh <br/> 
       </div>
     </div>
     <br/>
