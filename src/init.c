@@ -79,8 +79,7 @@ extern char **environ;
 /*  Sleep a number of milliseconds.
  *	This only works correctly because Linux select updates
  *	the elapsed time in the struct timeval passed to select! */
-static void do_msleep(int msec)
-{
+static void do_msleep(int msec){
 	struct timeval tv;
 	tv.tv_sec = msec / 1000;
 	tv.tv_usec = (msec % 1000) * 1000;
@@ -1551,61 +1550,45 @@ read_inittab(void) {
 			if (ch->new && ch->action != ch->new->action) ch->flags |= KILLME;
 			/*	Only BOOT processes may live in all levels */
 			if (ch->action != BOOT && strchr(ch->rlevel, runlevel) == NULL) {
-				/*	Ondemand procedures live always,
-				 *	except in single user   */
+				/*	Ondemand procedures live always, except in single user   */
 				if (runlevel == 'S' || !(ch->flags & DEMAND)) ch->flags |= KILLME;
-			}
-			/* Now, if this process may live note so in the new list */
-			if ((ch->flags & KILLME) == 0) {
+			}	/* Now, if this process may live note so in the new list */
+			if ((ch->flags & KILLME) == 0) { /* Sync */
 				ch->new->flags = ch->flags;
 				ch->new->pid = ch->pid;
 				ch->new->exstat = ch->exstat;
 				continue;
-			}
-			/* 	Is this process still around? */
-			if ((ch->flags & RUNNING) == 0) {
+			} if ((ch->flags & RUNNING) == 0) { /* 	Is this process still around? */ 
 				ch->flags &= ~KILLME;
 				continue;
-			}
-			INITDBG(L_VB, "Killing \"%s\"", ch->process);
-			
-			if (round == 0) {
-				/* Send TERM signal */
+			}	/* LOGING*/ INITDBG(L_VB, "Killing \"%s\"", ch->process);
+			if (round == 0) {	/******* Send TERM signal **********/
 				if (talk)
 					initlog(L_CO,"Sending processes configured via /etc/inittab the TERM signal");
 				kill(-(ch->pid), SIGTERM);
 				foundOne = 1;
-			}
-			if(round == 1) { 
-				/* Send KILL signal and collect status */
+			} if(round == 1) { /****** Send KILL signal and collect status ******/
 				if (talk)
 					initlog(L_CO,"Sending processes configured via /etc/inittab the KILL signal");
 				kill(-(ch->pid), SIGKILL);
 				break;
-			} 	talk = 0;
-		}
-		/*	See if we have to wait sleep_time seconds */
-		if (foundOne && round == 0) {
-			/*	Yup, but check every 10 milliseconds if we still have children.
-			 *      The f < 100 * sleep_time refers to sleep time in 10 millisecond chunks. */
+			} talk = 0;
+		} if (foundOne && round == 0) {
+			/*	Yup, but check every 10 milliseconds if we still have children. The f<100*sleep_time refers to sleep time in 10 millisecond chunks. */
 			for (f = 0; f < 100 * sleep_time; f++){
 				for (ch = family; ch; ch = ch->next){
 					if (!(ch->flags & KILLME)) 							continue;
 					if ((ch->flags & RUNNING) && !(ch->flags & ZOMBIE)) break;
-				}
-				if (ch == NULL) {
-					/* No running children, skip SIGKILL */
+				} if (ch == NULL) {		/* No running children, skip SIGKILL */
 					round = 1;
-					foundOne = 0; /* Skip the sleep below. */
+					foundOne = 0; 		/* Skip the sleep below. */
 					break;
 				}
 				do_msleep(MINI_SLEEP);
 			}
 		}
 	}
-
-	/*	Now give all processes the chance to die and collect exit statuses. */
-	if (foundOne)	do_msleep(MINI_SLEEP);
+	if (foundOne)	do_msleep(MINI_SLEEP);	/*	Now give all processes the chance to die and collect exit statuses. */
 	for (ch = family; ch; ch = ch->next) {
 		if (ch->flags & KILLME) {
 			if (!(ch->flags & ZOMBIE)) 
@@ -1617,8 +1600,7 @@ read_inittab(void) {
 					write_utmp_wtmp("", ch->id, ch->pid, DEAD_PROCESS, NULL);
 			}
 		}
-	}
-	/*	Both rounds done; clean up the list. */
+	}			/*	Both rounds done; clean up the list. */
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
@@ -1630,68 +1612,65 @@ read_inittab(void) {
 	for (ch = family; ch; ch = ch->next) ch->new = NULL;
 	newFamily = NULL;
 	sigprocmask(SIG_SETMASK, &omask, NULL);
-
 #ifdef INITLVL
 	/*	Dispose of INITLVL file. */
-	if (lstat(INITLVL, &st) >= 0 && S_ISLNK(st.st_mode)) {
-		/*	INITLVL is a symbolic link, so just truncate the file */
+	if (lstat(INITLVL, &st) >= 0 && S_ISLNK(st.st_mode)) 
 		close(open(INITLVL, O_WRONLY | O_TRUNC));
-	} else {
-		/* Delete INITLVL file. */
-		unlink(INITLVL);
-	}
+		/*	INITLVL is a symbolic link, so just truncate the file */
+	else unlink(INITLVL); /*DELETE INITLVL FILE*/
 #endif
 #ifdef INITLVL2
-	/*	Dispose of INITLVL2 file. */
-	if (lstat(INITLVL2, &st) >= 0 && S_ISLNK(st.st_mode)) {
-		/*	INITLVL2 is a symbolic link, so just truncate the file.  */
+	if (lstat(INITLVL2, &st) >= 0 && S_ISLNK(st.st_mode)) 
 		close(open(INITLVL2, O_WRONLY | O_TRUNC));
-	} else {
-		/*	Delete INITLVL2 file. */
-		unlink(INITLVL2);
-	}
+	else 	unlink(INITLVL2);
 #endif
 }
-
-/*
- *	Walk through the family list and start up children.
+static void 
+initshell(void) {
+	int8_t get = 1		;
+	char *str1 			;
+	char *cls = "close" ;
+	iCMD *icmdl			;
+	
+	while ( get == 1 ) 	{
+		str1 = imalloc(sizeof(iCMD)	);
+		printf("initshell by x2-init => $ ");
+		scanf("%s" ,str1  )	;
+		if (!strcmp(str1 ,cls)) get = 0 ;
+		else {
+			printf ("command is not found \n     :(\n") ;
+			continue ;
+		}					/*+++_ Send variables to type iCMD _+++*/
+		(*icmdl).cls = cls	; 
+	}						if (get == 0) free(str1);
+}
+/*	Walk through the family list and start up children.
  *	The entries that do not belong here at all are removed
- *	from the list.
- */
-static void start_if_needed(void)
-{
+ *	from the list.										*/
+static void 
+start_if_needed(void)	{
 	CHILD *ch;	/* Pointer to child */
 	int delete; /* Delete this entry from list? */
 
 	INITDBG(L_VB, "Checking for children to start");
 
-	for (ch = family; ch; ch = ch->next)
-	{
-
+	for (ch = family; ch; ch = ch->next)	{
 #if DEBUG
-		if (ch->rlevel[0] == 'C')
-		{
+		if (ch->rlevel[0] == 'C')	{
 			INITDBG(L_VB, "%s: flags %d", ch->process, ch->flags);
 		}
 #endif
-
 		/* Are we waiting for this process? Then quit here. */
-		if (ch->flags & WAITING)
-			break;
-
+		if (ch->flags & WAITING)	break;
 		/* Already running? OK, don't touch it */
-		if (ch->flags & RUNNING)
-			continue;
-
+		if (ch->flags & RUNNING)	continue;
 		/* See if we have to start it up */
 		delete = 1;
 		if (strchr(ch->rlevel, runlevel) ||
-			((ch->flags & DEMAND) && !strchr("#*Ss", runlevel)))
-		{
+			((ch->flags & DEMAND) && !strchr("#*Ss", runlevel)))	{
 			startup(ch);
 			delete = 0;
 		}
-
 		if (delete)
 		{
 			/* is this OK? */
@@ -2767,8 +2746,13 @@ is pressed, and that we want to handle keyboard signals. */
 }
 static void 
 usage(char *s){
+	int8_t z ;
+	printf("UWU\nUwU\n\n");
 	fprintf(stderr, 
 		"Usage X2-INiT:\n command => %s{-e VAR[=VAL]|[-t SECONDS]{0|1|2|3|4|5|6|S|s|Q|q|A|a|B|b|C|c|U|u}}\n AUTHOR: Andre Bobrovskiy [hignu22] \n\n", s);
+	printf("like u start initshell for configure init-system (1 yes, else - no )");
+	scanf( "%i" ,&z );
+	if (z == 1)	initshell();
 	exit(1);
 }
 static int

@@ -73,6 +73,9 @@ typedef struct _child_ {
     struct _child_ *next;		/* For the linked list */
 } CHILD;
 
+typedef struct  {
+    char *cls   ;            /* exit command */
+}        iCMD   ;
 
 /* Values for the 'flags' field */
 #define RUNNING			2	/* Process is still running */

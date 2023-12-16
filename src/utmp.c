@@ -246,12 +246,12 @@ char *oldline)			/* Line of old utmp entry. */
  *	Write a record to both utmp and wtmp.
  */
 void write_utmp_wtmp(
-char *user,			/* name of user */
-char *id,			/* inittab ID */
-int pid,			/* PID of process */
-int type,			/* TYPE of entry */
-char *line)			/* LINE if used. */
-{
+	char *user,			/* name of user */
+	char *id,			/* inittab ID */
+	int pid,			/* PID of process */
+	int type,			/* TYPE of entry */
+	char *line)			/* LINE if used. */		{
+		
 	char	oldline[UT_LINESIZE];
 
 	/*
