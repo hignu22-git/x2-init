@@ -1625,35 +1625,57 @@ read_inittab(void) {
 	else 	unlink(INITLVL2);
 #endif
 }
-static void 
-initshell(void) {
-	int8_t get = 1		;
-	char *str1 			;
-	char *cls = "close" ;
-	iCMD *icmdl			;
-	
+static void initshell(void) {
+	int8_t get = 1				;
+	char *str1 ,*str2 ,*host	;
+	char *cls = "close" 		;
+	char *initb = "set" 		;
+	char *chroot = "x2chroot" 	;
+	iCMD *icmdl					;
+	int8_t getr = 1				;
+	int	 	int1        		;
 	while ( get == 1 ) 	{
 		str1 = imalloc(sizeof(iCMD)	);
 		printf("initshell by x2-init => $ ");
-		scanf("%s" ,str1  )	;
-		if (!strcmp(str1 ,cls)) get = 0 ;
-		else {
-			printf ("command is not found \n     :(\n") ;
+		scanf("%s" ,str1  )	;					
+		if (!strcmp(str1 ,cls)) get = 0 ;   /* command 1lvl == "close" */
+		else if (!strcmp(str1 ,initb))  {	/* command 1lvl == "set" */
+			printf("args for the set command { \n");
+			printf("§ 1 set default runlvl \n§ 2 set default wm \n") ;
+			while ( getr == 1 ) {
+				printf("$ ------> ");
+				scanf("%i" ,&int1);
+				if(int1 == 1) {		    	/* command 2lvl == "1" [rlvl] */
+					printf("logs => %i\n" ,int1);		/* debug msg */
+				}else if(int1 == 0 ) break ;
+			} continue ;
+		}else if (!strcmp(str1 ,chroot)) {	/* command 1lvl == "xtwochroot" */
+			printf("chroot utility made by x2init.\n");
+			printf("enter the drive ==> "); scanf("%s" ,str2);/*str2 -drive*/
+			printf("enter hostname (if not write . ) ==> "); scanf("%s" , host);
+			/* starting chroot */
+			execl("/bin/sh" ,"sh" ,"-c" ,"mount" ,str2 ,"/mnt/slack_x2mount" ,NULL); sleep("2"); 
+			execl("/bin/sh", "sh" ,"-c" ,
+				"cp" ,"-Lf" ,"/etc/resolv.conf" ,"/mnt/slack_x2mount/etc/" ,NULL); sleep(2);
+			execl("/bin/sh", "sh" ,"-c" ,"mount" ,"--bind" ,"/dev" ,
+				"/mnt/slack_x2mount/dev" ,NULL); sleep(2);
+			execl("/bin/sh" ,"sh" ,"-c" ,"hostname" ,host , NULL); sleep(2);
+			execl("/bin/sh" ,"sh" ,"-c" ,"/etc/rc.x2chroot.sh", NULL); /* chroot start conf */
+			continue;
+		} else {
+			printf ("COMMAND IS NOT FOUND:(\n") ;
 			continue ;
 		}					/*+++_ Send variables to type iCMD _+++*/
-		(*icmdl).cls = cls	; 
-	}						if (get == 0) free(str1);
+		(*icmdl).chroot = chroot;
+		(*icmdl).cls = cls		;
+		(*icmdl).initb = initb	;
+	} if (get == 0) free(str1)	;
 }
-/*	Walk through the family list and start up children.
- *	The entries that do not belong here at all are removed
- *	from the list.										*/
-static void 
-start_if_needed(void)	{
+/*	Walk through the family list and start up children.	The entries that do not belong here at all are removed	from the list.	*/
+static void start_if_needed(void)	{
 	CHILD *ch;	/* Pointer to child */
 	int delete; /* Delete this entry from list? */
-
 	INITDBG(L_VB, "Checking for children to start");
-
 	for (ch = family; ch; ch = ch->next)	{
 #if DEBUG
 		if (ch->rlevel[0] == 'C')	{

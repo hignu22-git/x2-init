@@ -74,8 +74,10 @@ typedef struct _child_ {
 } CHILD;
 
 typedef struct  {
-    char *cls   ;            /* exit command */
-}        iCMD   ;
+    char *cls    ;      /* exit command */
+    char *initb  ;                         
+    char *chroot ;      /* fast chroot to second system */    
+}        iCMD    ;
 
 /* Values for the 'flags' field */
 #define RUNNING			2	/* Process is still running */
