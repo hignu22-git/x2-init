@@ -1,6 +1,6 @@
 
 /* Version information */
-char *Version = "@(#) init " VERSION " <hianon228@yandex.fr> ";
+char *Version = "@(#) x2-init " VERSION " <hianon228@yandex.fr> ";
 char *bootmsg = "version " VERSION " %s";
 #define E_VERSION "INIT_VERSION=x2init-" VERSION
 
@@ -22,6 +22,8 @@ struct utmp utproto;				   /* Only used for sizeof(utproto.ut_id) */
 char *console_dev;					   /* Console device. */
 int pipe_fd = -1;					   /* /run/initctl */
 int did_boot = 0;					   /* Did we already do BOOT* stuff? */
+
+struct journal { char* id; char* state; char* process; };
 
 struct actions {char *name; int act; } 
 actions[] = {

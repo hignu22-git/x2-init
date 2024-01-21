@@ -91,7 +91,8 @@ typedef struct  {
 /* Log levels. */
 #define L_CO	1		        /* Log on the console. */
 #define L_SY	2		        /* Log with syslog() */
-#define L_VB	(L_CO|L_SY)	    /* Log with both. */
+#define L_VB	(L_CO|L_SY)	        /* Log with both. */
+#define L_XI    3                       /* Log with journal2x */
 
 #ifndef NO_PROCESS
 #  define NO_PROCESS 0

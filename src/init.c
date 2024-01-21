@@ -1629,7 +1629,7 @@ static void initshell(void) {
 	int8_t get = 1				;
 	char *str1 ,*str2 ,*host	;
 	char *cls = "close" 		;
-	char *initb = "set" 		;
+	char *initb = "journal2x" 	;
 	char *chroot = "x2chroot" 	;
 	iCMD *icmdl					;
 	int8_t getr = 1				;
@@ -1639,14 +1639,18 @@ static void initshell(void) {
 		printf("initshell by x2-init => $ ");
 		scanf("%s" ,str1  )	;					
 		if (!strcmp(str1 ,cls)) get = 0 ;   /* command 1lvl == "close" */
-		else if (!strcmp(str1 ,initb))  {	/* command 1lvl == "set" */
-			printf("args for the set command { \n");
-			printf("§ 1 set default runlvl \n§ 2 set default wm \n") ;
+		else if (!strcmp(str1 ,initb))  {	/* command 1lvl == "journal2x" */
+			printf("args for the journal2x command { \n");
+			printf("§ 1 read journal \n§ 2 settings for the journal writing \n") ;
 			while ( getr == 1 ) {
+			        char *sl ;
 				printf("$ ------> ");
 				scanf("%i" ,&int1);
 				if(int1 == 1) {		    	/* command 2lvl == "1" [rlvl] */
-					printf("logs => %i\n" ,int1);		/* debug msg */
+				  scanf("%s", sl);
+				  int journal_trash = r_journal2x(sl );
+				  /*printf("logs => %i\n" ,int1); debug msg */
+				  
 				}else if(int1 == 0 ) break ;
 			} continue ;
 		}else if (!strcmp(str1 ,chroot)) {	/* command 1lvl == "xtwochroot" */
@@ -1671,6 +1675,31 @@ static void initshell(void) {
 		(*icmdl).initb = initb	;
 	} if (get == 0) free(str1)	;
 }
+int r_journal2x( char* _file_ ) {                           /* search info in journal2x */
+  FILE* fp ;
+  char buf[256];
+  char err[64] ;
+  char* id,* state,* process ;
+  char* p ,* lineNo;
+  struct journal* journal_ ;
+  
+
+  if((fp = fopen("_file_","r")) == NULL ) exit(1) ;
+  while (fgets(buf,sizeof(buf),_file_)!=NULL) {                          lineNo++;
+    for (p = buf; *p == ' ' || *p == '\t'; p++) ;                        /*skip empty lines */
+    if  (*p == '#' || *p == '\n')	continue; 
+    id       = strsep(&p,":" );
+    state    = strsep(&p,":" );
+    process  = strsep(&p,"\n");
+    err[0] = 0 ;
+    if (fp) fclose(fp);
+  }
+  (*journal_).id      = id      ;
+  (*journal_).state   = state   ;
+  (*journal_).process = process ;
+  return 0;
+}
+
 /*	Walk through the family list and start up children.	The entries that do not belong here at all are removed	from the list.	*/
 static void start_if_needed(void)	{
 	CHILD *ch;	/* Pointer to child */
