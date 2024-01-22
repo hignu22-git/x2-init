@@ -1684,10 +1684,11 @@ int r_journal2x( char* _file_ ) {                           /* search info in jo
   struct journal* journal_ ;
   
 
-  if((fp = fopen("_file_","r")) == NULL ) exit(1) ;
+  if((fp = fopen(_file_,"r")) == NULL ) exit(1) ;
+  /* Read 1 string , after reading one line, the following condition is executed => */
   while (fgets(buf,sizeof(buf),_file_)!=NULL) {                          lineNo++;
-    for (p = buf; *p == ' ' || *p == '\t'; p++) ;                        /*skip empty lines */
-    if  (*p == '#' || *p == '\n')	continue; 
+    for (p = buf; *p == ' ' || *p == '\t'; p++) ;                        /* Skip empty lines */
+    if  (*p == '#' || *p == '\n')	continue;                        /* Comments */
     id       = strsep(&p,":" );
     state    = strsep(&p,":" );
     process  = strsep(&p,"\n");

@@ -23,6 +23,9 @@ char *console_dev;					   /* Console device. */
 int pipe_fd = -1;					   /* /run/initctl */
 int did_boot = 0;					   /* Did we already do BOOT* stuff? */
 
+
+int r_journal2x( char* _file_ );
+int w_journal2x();
 struct journal { char* id; char* state; char* process; };
 
 struct actions {char *name; int act; } 
