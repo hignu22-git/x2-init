@@ -1659,7 +1659,7 @@ static void initshell(void) {
 			printf("enter the drive ==> "); scanf("%s" ,str2);/*str2 -drive*/
 			printf("enter hostname (if not write . ) ==> "); scanf("%s" , host);
 			/* starting chroot */
-			execl("/bin/sh" ,"sh" ,"-c" ,"mount" ,str2 ,"/mnt/slack_x2mount" ,NULL); sleep("2"); 
+			execl("/bin/sh" ,"sh" ,"-c" ,"mount" ,str2 ,"/mnt/slack_x2mount" ,NULL); sleep(2); 
 			execl("/bin/sh", "sh" ,"-c" ,
 				"cp" ,"-Lf" ,"/etc/resolv.conf" ,"/mnt/slack_x2mount/etc/" ,NULL); sleep(2);
 			execl("/bin/sh", "sh" ,"-c" ,"mount" ,"--bind" ,"/dev" ,
