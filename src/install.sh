@@ -2,7 +2,6 @@
 ########-INStAlL-SCRiPt-#########
 # MOD BY hignu22[ Andre Bobrovskiy]
 
-#!/bin/bash
 if [ -e /etc/inittab ]
 then
     echo "File /etc/inittab exists.... removing ..."
@@ -14,6 +13,10 @@ else
     sudo cp ../var/inittab 		/etc/ 
     sudo cp ../var/rc.d/rc.d    /etc/ 
 fi
+
+echo " -< Installing x2-init as default... >-"
+mv -v /sbin/init /sbin/alter-init
+cp -v /sbin/x2-init /sbin/init
 
 echo("@----@--@@@@------@@@-@----@-@@@-@---------");
 echo("-@--@------@-------@--@@---@--@--@---------");
