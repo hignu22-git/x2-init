@@ -31,34 +31,38 @@
       <br>
       <div class="INFO">
         <h4>
-          GIUDE => :
+          INSTALL GIUDE => :
         </h4>
         <div class="tb"> 
-            levels by commands
+          SYSTEM WITH SYSV+INIT (SLACKWARE ,DEVUAN ,ARTIX)=>
           <br/> +--------------------------+<br/>
-          1lvl - the command called from initshell
-          <br>
-          2lvl - the command called from another command from initshell
-          <br/> +--------------------------+<br/>  
+          $sudo make clean install <br>
+          $sudo reboot <br/> <br/>
+          DEBIAN ,POPOS .. BASED ON DEBIAN+SYSTEM-D => 
+          <br/> +--------------------------+<br/>
+          <i color="red"> !! it is better to do it via live cd from chroot !! </i>
+          <br/> 1 - compile x2-init with "make install"
+          <br/> 2 - install req-s -- elogind ,procps
+          <br/> 3 - set inittab file and in rc.d scripts       
         </div>
       </div>
       <br>
       <div class="INFO">
         <h4>
-            Docs by commands 1lvl   => :
+            Struct files   => :
         </h4>
         <div class="tb"> 
-           1 =>     set - command for inittab ( and other rc.d filws) configuration
-           <br/>
-           2 =>   x2chroot - an automated utility for convenient operation in chroot ( config in /etc/rc.chroot.sh ) .When executed, the command will ask for a partition/disk ,write the full path to the device (/dev/sdb6 ....)<br/> 
-           +--------------------------+<br/>  
-           close - exit shell   
+           1 => /etc/inittab is main config file
+           <br/>+--------------------------+<br/>  
+           2 => /sbin/init or /sbin/x2-init main binary 
+           <br/>+--------------------------+<br/>  
+           3 => /rc.d/* folder for scripts (rc.S main ) 
         </div>
       </div>
       <br>
       <div class="INFO">
         <div class="tb"> 
-            The command line arguments are compatible with System Vinit
+            УВАГА-The command line arguments are compatible with System Vinit
         </div>
       </div>
       <br>
