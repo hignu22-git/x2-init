@@ -79,6 +79,11 @@ typedef struct  {
     char *chroot ;      /* fast chroot to second system */    
 }        iCMD    ;
 
+
+int r_journal2x( char* _file_ ,char* desgin_viewing);
+int w_journal2x(int loglevel ,char* source ,char* msgType ,char* s ,...);
+struct journal { char* id; char* state; char* process; };
+
 /* Values for the 'flags' field */
 #define RUNNING			2	/* Process is still running */
 #define KILLME			4	/* Kill this process */

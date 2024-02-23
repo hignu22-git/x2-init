@@ -762,8 +762,7 @@ safe_write(int fd, const char *buffer, size_t count)
 /*
  *	Print to the system console
  */
-void print(char *s)
-{
+void print(char *s) {
 	int fd;
 
 	if ((fd = console_open(O_WRONLY | O_NOCTTY | O_NDELAY)) >= 0)
@@ -1676,53 +1675,89 @@ static void initshell(void) {
 		(*icmdl).initb = initb	;
 	} if (get == 0) free(str1)	;
 }
-int r_journal2x( char* _file_, char* desgin_viewing ) {                           /* search info in journal2x */
-  FILE* fp ;
-  char buf[256];
-  char err[64] ;
-  char* id,* state,* process ;
-  char* p ;
-  int lineNo = 0 ;
-  struct journal* journal_ ;
+int 
+r_journal2x( char* _file_, char* desgin_viewing ) {                           /* search info in journal2x */
+  	FILE* fp ;
+  	char buf[256];
+  	char err[64] ;
+  	char* id,* state,* process ;
+  	char* p ;
+  	int lineNo = 0 ;
+  	struct journal* journal_ ;
   
-  if((fp = fopen(_file_,"r")) == NULL ) exit(1) ;
-  /* Read 1 string , after reading one line, the following condition is executed => */
-  if(!strcmp(desgin_viewing,"byAll")){
-    while (fgets(buf,sizeof(buf),_file_)!=NULL){  lineNo++;
-      for (p = buf; *p == ' ' || *p == '\t'; p++) ;       /* Skip empty lines */
-      if  (*p == '#' || *p == '\n')	continue;         /* Comments */
-      id       = strsep(&p,":" );
-      state    = strsep(&p,":" );
-      process  = strsep(&p,"\n");
-      printf("%i => %s : %s : %s ;  \n", lineNo, id, state, process);
-      err[0] = 0 ;
-    }
-  }else if(!strcmp(desgin_viewing,"byId")){
-    char* not_id;
-    scanf("%s",not_id);
-    while (fgets(buf,sizeof(buf),_file_)!=NULL){
-      for (p = buf; *p == ' ' || *p == '\t'; p++) ;     
-      if  (*p == '#' || *p == '\n')	continue  ;     
-      id       = strsep(&p,":" );
-      state    = strsep(&p,":" );
-      process  = strsep(&p,"\n");
-      if(!strcmp(id,not_id)){
-	printf("%i => %s : %s : %s ;  \n", lineNo, id, state, process);
-      }
-    }
-  }
-
-  (*journal_).id      = id      ;
-  (*journal_).state   = state   ;
-  (*journal_).process = process ;
-  if (fp) fclose(fp);
-  return 0;
+  	if((fp = fopen(_file_,"r")) == NULL ) exit(1) ;
+  	/* Read 1 string , after reading one line, the following condition is executed => */
+  	if(!strcmp(desgin_viewing,"byAll")){
+    	while (fgets(buf,sizeof(buf),_file_)!=NULL){  lineNo++;
+      		for (p = buf; *p == ' ' || *p == '\t'; p++) ;       /* Skip empty lines */
+      		if  (*p == '#' || *p == '\n')	continue;         /* Comments */
+      		id       = strsep(&p,":" );
+      		state    = strsep(&p,":" );
+      		process  = strsep(&p,"\n");
+      		printf("%i => %s : %s : %s ;  \n", lineNo, id, state, process);
+     		err[0] = 0 ;
+    	}
+  	}else if(!strcmp(desgin_viewing,"byId")){
+    	char* not_id;
+    	scanf("%s",not_id);
+    	while (fgets(buf,sizeof(buf),_file_)!=NULL){
+      		for (p = buf; *p == ' ' || *p == '\t'; p++) ;     
+      		if  (*p == '#' || *p == '\n')	continue  ;     
+      		id       = strsep(&p,":" );
+      		state    = strsep(&p,"=" );
+      		process  = strsep(&p,";");
+      		if(!strcmp(id,not_id)){
+				printf("%i => %s : %s = %s ;  \n", lineNo, id, state, process);
+      		}
+    	}
+  	}
+  	(*journal_).id      = id      ;
+  	(*journal_).state   = state   ;
+  	(*journal_).process = process ;
+  	if (fp) fclose(fp);
+  	return 0;
 }
-int w_journal2x(){
-  return 0;
+int 
+w_journal2x(int loglevel ,
+			char* source ,char* msgType ,char* s , ...) 
+{
+	FILE* fp;					/* journal file */
+	char* p ;					/* pointer */
+	/*char* i,* ste,* p */
+	va_list va_alist; 			/* for "..." */
+	char buf[256];				/* buffer for content */
+	char file_buf[256];			/* buffer for id      */
+	char nbuf[32];
+	sigset_t nmask, omask;
+	char* nEnd = ".xijs";
+								/* the "va_list" args reading */
+	va_start(va_alist, s);
+	vsnprintf(buf, sizeof(buf), s, va_alist); /* Msg */
+	va_end(va_alist);
+	
+	time_t _time_		= time(NULL)		;
+	struct tm *now_ 	= localtime(&_time_); 
+	int nik00sort	 	= (*now_).tm_mon 	;
+	int nik01sort		= (*now_).tm_mday	;
+	int nik11sort		= (*now_).tm_year	;
+	char nik00sort_log  = nik00sort  		;
+	char nik01sort_log	= nik01sort 		;
+	char nik11sort_log	= nik11sort			;
+	snprintf(nbuf, sizeof(nbuf), 
+		nik00sort_log, "-", nik01sort_log, "-", nik11sort_log);
+	snprintf(file_buf, sizeof(file_buf), source, nEnd) ;
+	
+	if (loglevel & L_XI) {   /*Log with journal2x*/
+		if((fp = fopen( file_buf,"w")) == NULL ) exit(1) ;
+		/* date : state = procces ; */
+		fprintf(fp, "%s:%s=%s \n ", nbuf, msgType ,buf);
+		if(fp) fclose(fp);
+	}	return 0;
 }
-/*	Walk through the family list and start up children.	The entries that do not belong here at all are removed	from the list.	*/
-static void start_if_needed(void)	{
+/*	Walk through the family list and start up children.	
+The entries that do not belong here at all are removed	from the list.	*/
+static void 
+start_if_needed(void)	{
 	CHILD *ch;	/* Pointer to child */
 	int delete; /* Delete this entry from list? */
 	INITDBG(L_VB, "Checking for children to start");
