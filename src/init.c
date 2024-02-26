@@ -1748,11 +1748,24 @@ w_journal2x(int loglevel ,
 	snprintf(file_buf, sizeof(file_buf), source, nEnd) ;
 	
 	if (loglevel & L_XI) {   /*Log with journal2x*/
-		if((fp = fopen( file_buf,"w")) == NULL ) exit(1) ;
-		/* date : state = procces ; */
-		fprintf(fp, "%s:%s=%s \n ", nbuf, msgType ,buf);
+		if((fp = fopen(file_buf, "a")) == NULL ) exit(1) ;
+		if ( &msgType == NULL ) msgType = "EL-0";
+		if (strcmp(msgType, "KERN_DEBUG") || strcmp(msgType, "EL-0") ) {
+				/* date : state = procces ; */
+			fprintf(fp, "%s:%s=%s;\n", nbuf, msgType ,buf);
+		}else if (!strcmp(msgType, "EL-0") ) {
+			if(fp) fclose(fp);
+			if((fp = fopen( ELS_LOG, "a")) == NULL ) exit(1) ;
+			fprintf(fp, "%s:=%s;/n", nbuf, buf);
+			if(fp) fclose(fp);
+		}else if (!strcmp(msgType, "KERN_DEBUG") ) {
+			if(fp) fclose(fp);
+			if((fp = fopen( DEBUG_LOG, "a")) == NULL ) exit(1) ;
+			fprintf(fp, "%s:=%s;/n", nbuf, buf);
+			if(fp) fclose(fp);
+		}	
 		if(fp) fclose(fp);
-	}	return 0;
+	} 	return 0;
 }
 /*	Walk through the family list and start up children.	
 The entries that do not belong here at all are removed	from the list.	*/

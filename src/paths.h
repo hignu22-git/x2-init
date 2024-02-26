@@ -17,6 +17,8 @@
 #define PWRSTAT		"/var/run/powerstatus" /* COMPAT: SIGPWR reason (OK/BAD) */
 #define RUNLEVEL_LOG "/var/run/runlevel" /* neutral place to store run level*/
 #define RUNLEVEL_DEF_DM  "/etc/rc.d/rc.4" /*default runlevel with dm */
+#define ELS_LOG "/var/log/els.xijs"
+#define DEBUG_LOG "/var/log/x2-kernel-debug.xijs"
 
 #if 0
 #define INITLVL		"/etc/initrunlvl"	/* COMPAT: New runlevel */
