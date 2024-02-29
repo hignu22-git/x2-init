@@ -115,9 +115,7 @@ char *line)			/* Which line is this */
 	}
 #endif
 
-	/*
-	 *	Zero the fields and enter new fields.
-	 */
+	/* Zero the fields and enter new fields. */
 	memset(&utmp, 0, sizeof(utmp));
 #if defined(__GLIBC__)
 	gettimeofday(&tv, NULL);

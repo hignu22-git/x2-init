@@ -877,23 +877,17 @@ char **init_buildenv(int child)
 	return e;
 }
 
-void init_freeenv(char **e)
-{
+void init_freeenv(char **e)	{
 	int n;
-
 	for (n = 0; e[n]; n++)
 		free(e[n]);
 	free(e);
 }
 
-/*
- *	Fork and execute.
- *
- *	This function is too long and indents too deep.
- *
- */
-static pid_t spawn(CHILD *ch, int *res)
-{
+/*	Fork and execute.
+ *	This function is too long and indents too deep.	*/
+static pid_t 
+spawn(CHILD *ch, int *res)	{
 	char *args[16];			  /* Argv array */
 	char buf[136];			  /* Line buffer */
 	int f, st;				  /* Scratch variables */
@@ -904,76 +898,54 @@ static pid_t spawn(CHILD *ch, int *res)
 	pid_t pid, pgrp;		  /* child, console process group. */
 	sigset_t nmask, omask;	  /* For blocking SIGCHLD */
 	struct sigaction sa;
-
 	*res = -1;
 	buf[sizeof(buf) - 1] = 0;
 
 	/* Skip '+' if it's there */
-	if (proc[0] == '+')
-		proc++;
-
+	if (proc[0] == '+')	proc++;
 	ch->flags |= XECUTED;
-
-	if (ch->action == RESPAWN || ch->action == ONDEMAND)
-	{
+	if (ch->action == RESPAWN || ch->action == ONDEMAND)	{
 		/* Is the date stamp from less than 2 minutes ago? */
 		time(&t);
-		if (ch->tm + TESTTIME > t)
-		{
-			ch->count++;
-		}
-		else
-		{
+		if (ch->tm + TESTTIME > t)	{ ch->count++; }
+		else {
 			ch->count = 0;
 			ch->tm = t;
-		}
-
-		/* Do we try to respawn too fast? */
-		if (ch->count >= MAXSPAWN)
-		{
-
+		} /* Do we try to respawn too fast? */ if (ch->count >= MAXSPAWN) {
 			initlog(L_VB,
 					"Id \"%s\" respawning too fast: disabled for %d minutes",
 					ch->id, SLEEPTIME / 60);
+			w_journal2x(L_XI, "init", "INFO", 
+					"Id \"%s\" respawning too fast: disabled for %d minutes",
+					ch->id, SLEEPTIME / 60);
 			ch->flags &= ~RUNNING;
-			ch->flags |= FAILING;
-
-			/* Remember the time we stopped */
+			ch->flags |=  FAILING;
+						/* Remember the time we stopped */
 			ch->tm = t;
-
-			/* Try again in 5 minutes */
+						/* Try again in 5 minutes */
 			oldAlarm = alarm(0);
-			if (oldAlarm > SLEEPTIME || oldAlarm <= 0)
-				oldAlarm = SLEEPTIME;
+			if (oldAlarm > SLEEPTIME || oldAlarm <= 0) oldAlarm = SLEEPTIME;
 			alarm(oldAlarm);
 			return (-1);
 		}
-	}
-
-	/* See if there is an "initscript" (except in single user mode). */
-	if (access(INITSCRIPT, R_OK) == 0 && runlevel != 'S')
-	{
+	} /* See if there is an "initscript" (except in single user mode). */
+	if (access(INITSCRIPT, R_OK) == 0 && runlevel != 'S')	{
 		/* Build command line using "initscript" */
 		args[1] = SHELL;
 		args[2] = INITSCRIPT;
 		args[3] = ch->id;
 		args[4] = ch->rlevel;
 		args[5] = "unknown";
-		for (f = 0; actions[f].name; f++)
-		{
-			if (ch->action == actions[f].act)
-			{
+		for (f = 0; actions[f].name; f++)	 { /* Add name label to args5 */
+			if (ch->action == actions[f].act){
 				args[5] = actions[f].name;
 				break;
 			}
-		}
-		if (proc[0] == '@')
-			proc++; /*skip leading backslash */
+		} if (proc[0] == '@')	proc++; /*skip leading backslash */
 		args[6] = proc;
 		args[7] = NULL;
-	}
-	else if ((strpbrk(proc, "~`!$^&*()=|\\{}[];\"'<>?")) && (proc[0] != '@'))
-	{
+	} else if ((strpbrk(proc, "~`!$^&*()=|\\{}[];\"'<>?")) 
+			&& (proc[0] != '@')){
 		/* See if we need to fire off a shell for this command */
 		/* Do not launch shell if first character in proc string is an at symbol  */
 		/* Give command line to shell */
@@ -983,182 +955,108 @@ static pid_t spawn(CHILD *ch, int *res)
 		strncat(buf, proc, sizeof(buf) - strlen(buf) - 1);
 		args[3] = buf;
 		args[4] = NULL;
-	}
-	else
-	{
+	} else {
 		/* Split up command line arguments */
 		buf[0] = 0;
-		if (proc[0] == '@')
-			proc++;
+		if (proc[0] == '@')	proc++;
 		strncat(buf, proc, sizeof(buf) - 1);
 		ptr = buf;
-		for (f = 1; f < 15; f++)
-		{
+		for (f = 1; f < 15; f++) {
 			/* Skip white space */
-			while (*ptr == ' ' || *ptr == '\t')
-				ptr++;
+			while (*ptr == ' ' || *ptr == '\t') 		ptr++;
 			args[f] = ptr;
-
 			/* May be trailing space.. */
-			if (*ptr == 0)
-				break;
-
+			if (*ptr == 0)								break;
 			/* Skip this `word' */
-			while (*ptr && *ptr != ' ' && *ptr != '\t' && *ptr != '#')
-				ptr++;
-
+			while (*ptr && *ptr != ' ' && *ptr != '\t' && *ptr != '#') ptr++;
 			/* If end-of-line, break */
-			if (*ptr == '#' || *ptr == 0)
-			{
+			if (*ptr == '#' || *ptr == 0) {
 				f++;
 				*ptr = 0;
 				break;
 			}
-			/* End word with \0 and continue */
-			*ptr++ = 0;
-		}
-		args[f] = NULL;
+			/* End word with \0 and continue */			*ptr++ = 0;
+		}	args[f] = NULL;
 	}
 	args[0] = args[1];
-	while (1)
-	{
-		/*
-		 *	Block sigchild while forking.
-		 */
+	while (1) {
+		/* Block sigchild while forking. */
 		sigemptyset(&nmask);
 		sigaddset(&nmask, SIGCHLD);
 		sigprocmask(SIG_BLOCK, &nmask, &omask);
 
-		if ((pid = fork()) == 0)
-		{
-
+		if ((pid = fork()) == 0) {
 			close(0);
 			close(1);
 			close(2);
-			if (pipe_fd >= 0)
-			{
+			if (pipe_fd >= 0) {
 				close(pipe_fd);
 				pipe_fd = -1;
-			}
-
-			sigprocmask(SIG_SETMASK, &omask, NULL);
-
-			/*
-			 *	In sysinit, boot, bootwait or single user mode:
+			}	sigprocmask(SIG_SETMASK, &omask, NULL);
+			/*	In sysinit, boot, bootwait or single user mode:
 			 *	for any wait-type subprocess we _force_ the console
-			 *	to be its controlling tty.
-			 */
-			if (strchr("*#sS", runlevel) && ch->flags & WAITING)
-			{
+			 *	to be its controlling tty. */
+			if (strchr("*#sS", runlevel) && ch->flags & WAITING) {
 				int ftty; /* Handler for tty controlling */
-				/*
-				 *	We fork once extra. This is so that we can
+				/*	We fork once extra. This is so that we can
 				 *	wait and change the process group and session
-				 *	of the console after exit of the leader.
-				 */
+				 *	of the console after exit of the leader. */
 				setsid();
-				if ((ftty = console_open(O_RDWR | O_NOCTTY)) >= 0)
-				{
+				if ((ftty = console_open(O_RDWR | O_NOCTTY)) >= 0) {
 					/* Take over controlling tty by force */
 					(void)ioctl(ftty, TIOCSCTTY, 1);
-
-					if (dup(ftty) < 0)
-					{
+					if (dup(ftty) < 0) {
 						initlog(L_VB, "cannot duplicate console fd");
+						w_journal2x(L_XI, "init", "ERROR", "cannot dublicate fd console ");
 					}
-
-					if (dup(ftty) < 0)
-					{
-						initlog(L_VB, "cannot duplicate console fd");
-					}
-				}
-
-				/*
-				 * 4 Sep 2001, Andrea Arcangeli:
-				 * Fix a race in spawn() that is used to deadlock init in a
-				 * waitpid() loop: must set the childhandler as default before forking
-				 * off the child or the chld_handler could run before the waitpid loop
-				 * has a chance to find its zombie-child.
-				 */
-				SETSIG(sa, SIGCHLD, SIG_DFL, SA_RESTART);
-				if ((pid = fork()) < 0)
-				{
-					initlog(L_VB, "cannot fork: %s",
+				}	SETSIG(sa, SIGCHLD, SIG_DFL, SA_RESTART);
+				if ((pid = fork()) < 0) {
+					initlog(L_VB, "cannot fork: %s", strerror(errno));
+					w_journal2x(L_XI, "init", "ERROR", "cannot fork : %s", 
 							strerror(errno));
 					exit(1);
 				}
-				if (pid > 0)
-				{
-					pid_t rc;
-					/*
-					 *	Ignore keyboard signals etc.
-					 *	Then wait for child to exit.
-					 */
-					SETSIG(sa, SIGINT, SIG_IGN, SA_RESTART);
+				if (pid > 0) {	pid_t rc;
+					/*Ignore keyboard signals etc. Then wait for child to exit*/
+					SETSIG(sa,  SIGINT, SIG_IGN, SA_RESTART);
 					SETSIG(sa, SIGTSTP, SIG_IGN, SA_RESTART);
 					SETSIG(sa, SIGQUIT, SIG_IGN, SA_RESTART);
 
 					while ((rc = waitpid(pid, &st, 0)) != pid)
-						if (rc < 0 && errno == ECHILD)
-							break;
-
-					/*
-					 *	Small optimization. See if stealing
-					 *	controlling tty back is needed.
-					 */
+						if (rc < 0 && errno == ECHILD) break;
+					/*	Small optimization. See if stealing controlling tty back is needed.	*/
 					pgrp = tcgetpgrp(ftty);
-					if (pgrp != getpid())
-						exit(0);
-
-					/*
-					 *	Steal controlling tty away. We do
-					 *	this with a temporary process.
-					 */
-					if ((pid = fork()) < 0)
-					{
+					if (pgrp != getpid())	exit(0);
+					/*	Steal controlling tty away. We do this with a temporary process.*/
+					if ((pid = fork()) < 0) {
 						initlog(L_VB, "cannot fork: %s",
 								strerror(errno));
+						w_journal2x(L_XI, "init", "ERROR", 
+								"cannot fork: %s [fork > 0 ]", strerror(errno));
 						exit(1);
-					}
-					if (pid == 0)
-					{
+					}if (pid == 0) {
 						setsid();
 						(void)ioctl(ftty, TIOCSCTTY, 1);
 						exit(0);
 					}
 					while ((rc = waitpid(pid, &st, 0)) != pid)
-						if (rc < 0 && errno == ECHILD)
-							break;
+						if (rc < 0 && errno == ECHILD)	break;
 					exit(0);
-				}
-
-				/* Set ioctl settings to default ones */
-				console_stty();
-			}
-			else
-			{ /* parent */
+				} /* Set ioctl settings to default ones */ console_stty();
+			} else { 		/* parent */
 				int fd;
 				setsid();
-				if ((fd = console_open(O_RDWR | O_NOCTTY)) < 0)
-				{
+				if ((fd = console_open(O_RDWR | O_NOCTTY)) < 0){
 					initlog(L_VB, "open(%s): %s", console_dev,
 							strerror(errno));
 					fd = open("/dev/null", O_RDWR);
-				}
-
-				if (dup(fd) < 0)
-				{
-					initlog(L_VB, "cannot duplicate /dev/null fd");
-				}
-
-				if (dup(fd) < 0)
-				{
-					initlog(L_VB, "cannot duplicate /dev/null fd");
+				}if (dup(fd) < 0){
+						initlog(L_VB, "cannot duplicate /dev/null fd");
+						w_journal2x(L_XI, "init",
+					 			"WARNING", "cannot dublicate /dev/null fd");
 				}
 			}
-
-			/*
-			 * Update utmp/wtmp file prior to starting
+			/* Update utmp/wtmp file prior to starting
 			 * any child.  This MUST be done right here in
 			 * the child process in order to prevent a race
 			 * condition that occurs when the child
@@ -1168,26 +1066,18 @@ static pid_t spawn(CHILD *ch, int *res)
 			 * the race condition happens, then init's utmp
 			 * update will happen AFTER the getty runs
 			 * and expects utmp to be updated already!
-			 *
 			 * Do NOT log if process field starts with '+'
 			 * This is for compatibility with *very*
-			 * old getties - probably it can be taken out.
-			 */
+			 * old getties - probably it can be taken out. */
 			if (ch->process[0] != '+')
 				write_utmp_wtmp("", ch->id, getpid(), INIT_PROCESS, "");
-
 			/* Reset all the signals, set up environment */
-			for (f = 1; f < NSIG; f++)
-				SETSIG(sa, f, SIG_DFL, SA_RESTART);
+			for (f = 1; f < NSIG; f++) SETSIG(sa, f, SIG_DFL, SA_RESTART);
 			environ = init_buildenv(1);
-
-			/*
-			 *	Execute prog. In case of ENOEXEC try again
-			 *	as a shell script.
-			 */
+			/*	Execute prog. In case of ENOEXEC try again
+			 *	as a shell script. */
 			execvp(args[1], args + 1);
-			if (errno == ENOEXEC)
-			{
+			if (errno == ENOEXEC){
 				args[1] = SHELL;
 				args[2] = "-c";
 				strcpy(buf, "exec ");
@@ -1195,9 +1085,8 @@ static pid_t spawn(CHILD *ch, int *res)
 				args[3] = buf;
 				args[4] = NULL;
 				execvp(args[1], args + 1);
-			}
-			initlog(L_VB, "cannot execute \"%s\"", args[1]);
-
+			} initlog(L_VB, "cannot execute \"%s\"", args[1]);
+			w_journal2x(L_XI, "init","ERROR","cannot execute \"%s\"",args[1]);
 			if (ch->process[0] != '+')
 				write_utmp_wtmp("", ch->id, getpid(), DEAD_PROCESS, NULL);
 			exit(1);
@@ -1206,30 +1095,26 @@ static pid_t spawn(CHILD *ch, int *res)
 		sigprocmask(SIG_SETMASK, &omask, NULL);
 
 		INITDBG(L_VB, "Started id %s (pid %d)", ch->id, pid);
-
-		if (pid == -1)
-		{
+		w_journal2x(L_XI, "init", "DEBUG", "started id %s (pid %d)", 
+				ch->id ,pid);
+		if (pid == -1)	{
 			initlog(L_VB, "cannot fork, retry..");
+			w_journal2x(L_XI, "init", "WARNING", "cannot fork, retry %d", pid);
+			w_journal2x(L_XI, "init", "DEBUG", "cannot fork, retry %d", pid);
 			do_msleep(SHORT_SLEEP);
 			continue;
-		}
-		return (pid);
+		} return (pid);
 	}
 }
 
-/*
- *	Start a child running!
- */
-static void startup(CHILD *ch)
-{
-	/*
-	 *	See if it's disabled
-	 */
-	if (ch->flags & FAILING)
-		return;
 
-	switch (ch->action)
-	{
+/*	Start a child running!	*/
+static void startup(CHILD *ch)	{
+	/*	See if it's disabled */
+
+	if (ch->flags & FAILING)	return;
+
+	switch (ch->action)	{
 
 	case SYSINIT:
 	case BOOTWAIT:
@@ -1769,8 +1654,7 @@ w_journal2x(int loglevel ,
 }
 /*	Walk through the family list and start up children.	
 The entries that do not belong here at all are removed	from the list.	*/
-static void 
-start_if_needed(void)	{
+static void start_if_needed(void)	{
 	CHILD *ch;	/* Pointer to child */
 	int delete; /* Delete this entry from list? */
 	INITDBG(L_VB, "Checking for children to start");
@@ -1778,6 +1662,8 @@ start_if_needed(void)	{
 #if DEBUG
 		if (ch->rlevel[0] == 'C')	{
 			INITDBG(L_VB, "%s: flags %d", ch->process, ch->flags);
+			w_journal2x(L_XI, "init-debug", "KERN_DEBUG",
+				"%s: flags %d", ch->procces, ch->flags );
 		}
 #endif
 		/* Are we waiting for this process? Then quit here. */
@@ -1790,57 +1676,38 @@ start_if_needed(void)	{
 			((ch->flags & DEMAND) && !strchr("#*Ss", runlevel)))	{
 			startup(ch);
 			delete = 0;
-		}
-		if (delete)
-		{
+		} if (delete)	{
 			/* is this OK? */
 			ch->flags &= ~(RUNNING | WAITING);
 			if (!ISPOWER(ch->action) && ch->action != KBREQUEST)
 				ch->flags &= ~XECUTED;
 			ch->pid = 0;
-		}
-		else
-			/* Do we have to wait for this process? */
-			if (ch->flags & WAITING)
-				break;
-	}
-	/* Done. */
+		} else if (ch->flags & WAITING)	break;
+	}	/* Done. */
 }
-
-/*
- *	Ask the user on the console for a runlevel
- */
-static int ask_runlevel(void)
-{
+/*	Ask the user on the console for a runlevel */
+static int ask_runlevel(void)	{
 	const char prompt[] = "\nEnter runlevel: ";
 	char buf[8];
 	int lvl = -1;
 	int fd;
-
 	console_stty();
 	fd = console_open(O_RDWR | O_NOCTTY);
 
-	if (fd < 0)
-		return ('S');
+	if (fd < 0)	return ('S');
 
-	while (!strchr("0123456789S", lvl))
-	{
+	while (!strchr("0123456789S", lvl))	{
 		safe_write(fd, prompt, sizeof(prompt) - 1);
-		if (read(fd, buf, sizeof(buf)) <= 0)
-			buf[0] = 0;
-		if (buf[0] != 0 && (buf[1] == '\r' || buf[1] == '\n'))
-			lvl = buf[0];
-		if (islower(lvl))
-			lvl = toupper(lvl);
+		if (read(fd, buf, sizeof(buf)) <= 0)	buf[0] = 0;
+		if (buf[0] != 0 && (buf[1] == '\r' || buf[1] == '\n'))	lvl = buf[0];
+		if (islower(lvl))	lvl = toupper(lvl);
 	}
 	close(fd);
 	return lvl;
 }
 
-/*
- *	Search the INITTAB file for the 'initdefault' field, with the default
- *	runlevel. If this fails, ask the user to supply a runlevel.
- */
+/*	Search the INITTAB file for the 'initdefault' field, with the default
+ *	runlevel. If this fails, ask the user to supply a runlevel.	*/
 static int get_init_default(void)
 {
 	CHILD *ch;
