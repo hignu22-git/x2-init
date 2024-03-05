@@ -96,20 +96,8 @@ struct { char *name; int mask; } flags[] = {
 		sigaction(sig, &sa, NULL);  \
 	} while (0)
 
-
-
 CHILD *family = NULL;	 /* The linked list of all entries */
 CHILD *newFamily = NULL; /* The list after inittab re-read */
-
-CHILD ch_emerg = {/* Emergency shell */
-				  WAITING, 0, 0, 0, 0,
-				  "~~",
-				  "S",
-				  3,
-				  "/sbin/sulogin",
-				  NULL,
-				  NULL};
-
 
 int main(int, char **);
 
@@ -117,7 +105,16 @@ int main(int, char **);
 #define ISPOWER(i) ((i) == POWERWAIT || (i) == POWERFAIL ||      \
 					(i) == POWEROKWAIT || (i) == POWERFAILNOW || \
 					(i) == CTRLALTDEL)
-
+/* w_journal2x */
+#define J1_INIT  "init"
+#define J2_DEBUG "DEBUG"
+#define J2_ERROR "ERROR"
+#define J2_WARN	 "WARNING"
+/* 1 FLAGS ,EXSTAT ,PID ,tm ,count ,id ,rlevel ,action ,process ,new ,next*/
+CHILD ch_emerg = {/* Emergency shell */
+				  WAITING, 0, 0, 0, 0,"~~",
+				  "S",3,"/sbin/sulogin",
+				  NULL,NULL};
 
 #define NR_EXTRA_ENV 16
 char *extra_env[NR_EXTRA_ENV];

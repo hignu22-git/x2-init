@@ -399,8 +399,7 @@ setproctitle(char *fmt, ...)
 	len = vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
-	if (maxproclen > 1)
-	{
+	if (maxproclen > 1){
 		memset(argv0, 0, maxproclen);
 		strncpy(argv0, buf, maxproclen - 1);
 	}
@@ -449,74 +448,38 @@ static void console_init(void)
 		close(fd);
 }
 
-/*
- *	Open the console with retries.
- */
-static int console_open(int mode)
-{
+/* Open the console with retries. */
+static int console_open(int mode) {
 	int f, fd = -1;
-	int m;
-
-	/*
-	 *	Open device in nonblocking mode.
-	 */
-	m = mode | O_NONBLOCK;
-
-	/*
-	 *	Retry the open five times.
-	 */
-	for (f = 0; f < 5; f++)
-	{
-		if ((fd = open(console_dev, m)) >= 0)
-			break;
+	int m = mode | O_NONBLOCK;		/*	Open device in nonblocking mode. */
+	for (f = 0; f < 5; f++) {		/* Retry the open five times. */
+		if ((fd = open(console_dev, m)) >= 0) break;
 		usleep(10000);
-	}
-
-	if (fd < 0)
-		return fd;
-
-	/*
-	 *	Set original flags.
-	 */
-	if (m != mode)
-		fcntl(fd, F_SETFL, mode);
+	} if (fd < 0) return fd;		/*	Set original flags. */
+	if (m != mode) fcntl(fd, F_SETFL, mode);
 	return fd;
 }
+/* We got a signal (HUP PWR WINCH ALRM INT) */
+static void signal_handler(int sig) { ADDSET(got_signals, sig); }
 
-/*
- *	We got a signal (HUP PWR WINCH ALRM INT)
- */
-static void signal_handler(int sig)
-{
-	ADDSET(got_signals, sig);
-}
-
-/*
- *	SIGCHLD: one of our children has died.
- */
+/* SIGCHLD: one of our children has died. */
 static
 #ifdef __GNUC__
 	void
 	chld_handler(int sig __attribute__((unused)))
 #else
-	void
-	chld_handler(int sig)
+	void chld_handler(int sig)
 #endif
 {
 	CHILD *ch;
 	int pid, st;
 	int saved_errno = errno;
 
-	/*
-	 *	Find out which process(es) this was (were)
-	 */
-	while ((pid = waitpid(-1, &st, WNOHANG)) != 0)
-	{
-		if (errno == ECHILD)
-			break;
+	/* Find out which process(es) this was (were) */
+	while ((pid = waitpid(-1, &st, WNOHANG)) != 0) {
+		if (errno == ECHILD) break;
 		for (ch = family; ch; ch = ch->next)
-			if (ch->pid == pid && (ch->flags & RUNNING))
-			{
+			if (ch->pid == pid && (ch->flags & RUNNING)) {
 				INITDBG(L_VB,
 						"chld_handler: marked %d as zombie",
 						ch->pid);
@@ -664,14 +627,14 @@ static
 /*
  *	Set terminal settings to reasonable defaults
  */
-static void console_stty(void)
-{
+static void 
+console_stty(void) {
 	struct termios tty;
 	int fd;
 
-	if ((fd = console_open(O_RDWR | O_NOCTTY)) < 0)
-	{
+	if ((fd = console_open(O_RDWR | O_NOCTTY)) < 0) {
 		initlog(L_VB, "can't open %s", console_dev);
+	    w_journal2x(L_XI, "init", "ERROR", "can't open \"%s\" ", console_dev);
 		return;
 	}
 
@@ -681,8 +644,7 @@ static void console_stty(void)
 	 * "xterm".  Later, gettys might disagree on this (i.e. we're not using
 	 * syscons) but some boot scripts, like /etc/init.d/xserver-xorg, still
 	 * need a non-dumb terminal.
-	 */
-	putenv("TERM=xterm");
+	 */		putenv("TERM=xterm");
 #endif
 
 	(void)tcgetattr(fd, &tty);
@@ -907,7 +869,7 @@ spawn(CHILD *ch, int *res)	{
 	if (ch->action == RESPAWN || ch->action == ONDEMAND)	{
 		/* Is the date stamp from less than 2 minutes ago? */
 		time(&t);
-		if (ch->tm + TESTTIME > t)	{ ch->count++; }
+		if (ch->tm + TESTTIME > t) ch->count++; 
 		else {
 			ch->count = 0;
 			ch->tm = t;
@@ -928,7 +890,8 @@ spawn(CHILD *ch, int *res)	{
 			alarm(oldAlarm);
 			return (-1);
 		}
-	} /* See if there is an "initscript" (except in single user mode). */
+	} /*  See if there is an "initscript" 
+		  (except in single user mode)  .  */
 	if (access(INITSCRIPT, R_OK) == 0 && runlevel != 'S')	{
 		/* Build command line using "initscript" */
 		args[1] = SHELL;
@@ -941,11 +904,10 @@ spawn(CHILD *ch, int *res)	{
 				args[5] = actions[f].name;
 				break;
 			}
-		} if (proc[0] == '@')	proc++; /*skip leading backslash */
+		} if (proc[0] == '@')	proc++; 		/*skip leading backslash */
 		args[6] = proc;
 		args[7] = NULL;
-	} else if ((strpbrk(proc, "~`!$^&*()=|\\{}[];\"'<>?")) 
-			&& (proc[0] != '@')){
+	} else if ((strpbrk(proc, "~`!$^&*()=|\\{}[];\"'<>?")) && (proc[0] != '@')){
 		/* See if we need to fire off a shell for this command */
 		/* Do not launch shell if first character in proc string is an at symbol  */
 		/* Give command line to shell */
@@ -955,8 +917,7 @@ spawn(CHILD *ch, int *res)	{
 		strncat(buf, proc, sizeof(buf) - strlen(buf) - 1);
 		args[3] = buf;
 		args[4] = NULL;
-	} else {
-		/* Split up command line arguments */
+	} else { /* Split up command line arguments */
 		buf[0] = 0;
 		if (proc[0] == '@')	proc++;
 		strncat(buf, proc, sizeof(buf) - 1);
@@ -996,11 +957,8 @@ spawn(CHILD *ch, int *res)	{
 			/*	In sysinit, boot, bootwait or single user mode:
 			 *	for any wait-type subprocess we _force_ the console
 			 *	to be its controlling tty. */
-			if (strchr("*#sS", runlevel) && ch->flags & WAITING) {
-				int ftty; /* Handler for tty controlling */
-				/*	We fork once extra. This is so that we can
-				 *	wait and change the process group and session
-				 *	of the console after exit of the leader. */
+			if (strchr("*#sS", runlevel) && ch->flags & WAITING) { int ftty; /* Handler for tty controlling */
+				/*	We fork once extra. This is so that we can wait and change the process group and session of the console after exit of the leader. */
 				setsid();
 				if ((ftty = console_open(O_RDWR | O_NOCTTY)) >= 0) {
 					/* Take over controlling tty by force */
@@ -1017,14 +975,15 @@ spawn(CHILD *ch, int *res)	{
 					exit(1);
 				}
 				if (pid > 0) {	pid_t rc;
-					/*Ignore keyboard signals etc. Then wait for child to exit*/
+					/* Ignore keyboard signals etc */
 					SETSIG(sa,  SIGINT, SIG_IGN, SA_RESTART);
 					SETSIG(sa, SIGTSTP, SIG_IGN, SA_RESTART);
 					SETSIG(sa, SIGQUIT, SIG_IGN, SA_RESTART);
 
 					while ((rc = waitpid(pid, &st, 0)) != pid)
 						if (rc < 0 && errno == ECHILD) break;
-					/*	Small optimization. See if stealing controlling tty back is needed.	*/
+					/*	Small optimization. 
+					 *	See if stealing controlling tty back is needed.	*/
 					pgrp = tcgetpgrp(ftty);
 					if (pgrp != getpid())	exit(0);
 					/*	Steal controlling tty away. We do this with a temporary process.*/
@@ -1034,21 +993,21 @@ spawn(CHILD *ch, int *res)	{
 						w_journal2x(L_XI, "init", "ERROR", 
 								"cannot fork: %s [fork > 0 ]", strerror(errno));
 						exit(1);
-					}if (pid == 0) {
-						setsid();
+					}if (pid == 0) { setsid();
 						(void)ioctl(ftty, TIOCSCTTY, 1);
 						exit(0);
 					}
 					while ((rc = waitpid(pid, &st, 0)) != pid)
 						if (rc < 0 && errno == ECHILD)	break;
 					exit(0);
-				} /* Set ioctl settings to default ones */ console_stty();
-			} else { 		/* parent */
-				int fd;
+				} /* Set ioctl settings to default ones */ 	console_stty();
+			} else { 		/* parent */ 					int fd;
 				setsid();
 				if ((fd = console_open(O_RDWR | O_NOCTTY)) < 0){
 					initlog(L_VB, "open(%s): %s", console_dev,
 							strerror(errno));
+					w_journal2x(L_XI, "init", "ERROR",
+							"open[%s]: \"%s\" ", console_dev, strerror(errno) );
 					fd = open("/dev/null", O_RDWR);
 				}if (dup(fd) < 0){
 						initlog(L_VB, "cannot duplicate /dev/null fd");
@@ -1069,8 +1028,8 @@ spawn(CHILD *ch, int *res)	{
 			 * Do NOT log if process field starts with '+'
 			 * This is for compatibility with *very*
 			 * old getties - probably it can be taken out. */
-			if (ch->process[0] != '+')
-				write_utmp_wtmp("", ch->id, getpid(), INIT_PROCESS, "");
+			if (ch->process[0] != '+') write_utmp_wtmp("", ch->id, getpid(), 
+													   		INIT_PROCESS, "");
 			/* Reset all the signals, set up environment */
 			for (f = 1; f < NSIG; f++) SETSIG(sa, f, SIG_DFL, SA_RESTART);
 			environ = init_buildenv(1);
@@ -1090,17 +1049,15 @@ spawn(CHILD *ch, int *res)	{
 			if (ch->process[0] != '+')
 				write_utmp_wtmp("", ch->id, getpid(), DEAD_PROCESS, NULL);
 			exit(1);
-		}
-		*res = pid;
+		} *res = pid;
 		sigprocmask(SIG_SETMASK, &omask, NULL);
-
 		INITDBG(L_VB, "Started id %s (pid %d)", ch->id, pid);
 		w_journal2x(L_XI, "init", "DEBUG", "started id %s (pid %d)", 
 				ch->id ,pid);
 		if (pid == -1)	{
 			initlog(L_VB, "cannot fork, retry..");
-			w_journal2x(L_XI, "init", "WARNING", "cannot fork, retry %d", pid);
-			w_journal2x(L_XI, "init", "DEBUG", "cannot fork, retry %d", pid);
+			w_journal2x(L_XI, "init", "WARNING", "Ups.. cannot fork, retry %d", pid);
+			w_journal2x(L_XI, "init", "DEBUG", "Ups.. cannot fork, retry %d", pid);
 			do_msleep(SHORT_SLEEP);
 			continue;
 		} return (pid);
@@ -1318,8 +1275,7 @@ read_inittab(void) {
 		rlevel = 	strsep(&p, ":");
 		action = 	strsep(&p, ":");
 		process = 	strsep(&p, "\n");
-		/*	Check if syntax is OK. Be very verbose here, to
-		 *	avoid newbie postings on comp.os.linux.setup :) */
+		/*	Check if syntax is OK. Be very verbose here, to avoid newbie postings on comp.os.linux.setup :) */
 		err[0] = 0;
 		if (!id || !*id)			strcpy(err, "missing id field");
 		if (!rlevel)				strcpy(err, "missing runlevel field");
@@ -1333,10 +1289,11 @@ read_inittab(void) {
 		/* err [0] != 0  */
 		if (err[0] != 0) {
 			initlog(L_VB, " %s[%d]: %s ", INITTAB, lineNo, err);
+			w_journal2x(L_XI, "INIT", "ERROR", " %s[%d]: %s", INITTAB, lineNo, err);
 			INITDBG(L_VB, "%s:%s:%s:%s", id, rlevel, action, process);
+			w_journal2x(L_XI, "INIT", "DEBUG", "%s:%s:%s:%s", id, rlevel, action, process);
 			continue;
-		}
-		/* Decode the "action" field */
+		}	/* Decode the "action" field */
 		actionNo = -1;
 		for (f = 0; actions[f].name; f++) {
 			if( strcasecmp(action, actions[f].name) == 0) {
@@ -1346,9 +1303,9 @@ read_inittab(void) {
 		}
 		if (actionNo == -1) {
 			initlog(L_VB, "%s[%d]: %s: unknown action field", INITTAB, lineNo, action);
-			continue;
-		}
-		/*	See if the id field is unique \/ */
+			w_journal2x(L_XI, "INIT", "ERROR", "%s[%d]: %s: unknown action field", 
+						INITTAB, lineNo, action); continue;    
+		}	/*	See if the id field is unique \/ */
 		for (old = newFamily; old; old = old->next) {
 			if (strcmp(old->id, id) == 0 && strcmp(id, "~~")) {
 				initlog(L_VB, "%s[%d]: duplicate ID field \"%s\"", INITTAB, lineNo, id);
@@ -1370,19 +1327,17 @@ read_inittab(void) {
 			if (ISPOWER(ch->action)) strcpy(ch->rlevel, "S0123456789");
 		}
 		/*	We have the fake runlevel '#' for SYSINIT  and '*' for BOOT and BOOTWAIT. */
-		if (ch->action == SYSINIT) 							strcpy(ch->rlevel, "#");
-		if (ch->action == BOOT || ch->action == BOOTWAIT) 	strcpy(ch->rlevel, "*");
+		if (ch->action == SYSINIT) 	strcpy(ch->rlevel, "#");
+		if (ch->action == BOOT || ch->action == BOOTWAIT) 
+			strcpy(ch->rlevel, "*");
 		/*	Now add it to the linked list. Special for powerfail. */
-		if (ISPOWER(ch->action)) {
-			/*	Disable by default */
+		if (ISPOWER(ch->action)) {			/* Disable by default */
 			ch->flags |= XECUTED;
-			/*	Tricky: insert at the front of the list ... */
-			old = NULL;
+			/*	Tricky: insert at the front of the list ... */	old = NULL;
 			for (i = newFamily; i; i = i->next) {
 				if (!ISPOWER(i->action)) break;
 				old = i;
-			}
-			/* Now add after entry "old" */
+			}	/* Now add after entry "old" */
 			if (old) {
 				ch->next = i;
 				old->next = ch;
@@ -1392,8 +1347,7 @@ read_inittab(void) {
 				newFamily = ch;
 				if (ch->next == NULL) head = ch;
 			}
-		} else {
-			/*	Just add at end of the list */
+		} else {					/*	Just add at end of the list */
 			if (ch->action == KBREQUEST)	ch->flags |= XECUTED;
 			ch->next = NULL;
 			if (head)  						head->next = ch;
@@ -1407,24 +1361,18 @@ read_inittab(void) {
 				break;
 			}
 		}
-	}
-	/*	We're done. */
+	}	/*	We're done. */
 	if (fp) fclose(fp);
 	if (tabdir) closedir(tabdir);
-
 #ifdef __linux__
 	check_kernel_console();
 #endif
-
-	/*	Loop through the list of children, and see if they need to
-	 *	be killed. */
-
+	/* Loop through the list of "children", and see if they need to be killed. */
+	w_journal2x(L_XI, J1_INIT, J2_DEBUG, "Checking for children to kill");
 	INITDBG(L_VB, "Checking for children to kill");
-	for (round = 0; round < 2; round++) {
-		talk = 1;
+	for (round = 0; round < 2; round++) /* 0 or 1 */ { talk = 1;
 		for (ch = family; ch; ch = ch->next) {
-			ch->flags &= ~KILLME;
-			/*	Is this line deleted ? */
+			ch->flags &= ~KILLME /* -5 */;
 			if (ch->new == NULL) ch->flags |= KILLME;
 			/*	If the entry has changed, kill it anyway. Note that
 			 *	we do not check ch->process, only the "action" field.
@@ -1438,14 +1386,14 @@ read_inittab(void) {
 				if (runlevel == 'S' || !(ch->flags & DEMAND)) ch->flags |= KILLME;
 			}	/* Now, if this process may live note so in the new list */
 			if ((ch->flags & KILLME) == 0) { /* Sync */
-				ch->new->flags = ch->flags;
-				ch->new->pid = ch->pid;
+				ch->new->flags 	= ch->flags;
+				ch->new->pid 	= ch->pid;
 				ch->new->exstat = ch->exstat;
 				continue;
 			} if ((ch->flags & RUNNING) == 0) { /* 	Is this process still around? */ 
 				ch->flags &= ~KILLME;
 				continue;
-			}	/* LOGING*/ INITDBG(L_VB, "Killing \"%s\"", ch->process);
+			} w_journal2x(L_XI ,J1_INIT ,J2_DEBUG ," killing \"%s\" " ,ch->process);
 			if (round == 0) {	/******* Send TERM signal **********/
 				if (talk)
 					initlog(L_CO,"Sending processes configured via /etc/inittab the TERM signal");
@@ -2686,10 +2634,9 @@ is pressed, and that we want to handle keyboard signals. */
 		/*	Say hello to the world */
 		initlog(L_CO, bootmsg, "booting");
 		/*	See if we have to start an emergency shell. */
-		if (emerg_shell) {
-			pid_t rc;
+		if (emerg_shell) { pid_t rc;
 			SETSIG(sa, SIGCHLD, SIG_DFL, SA_RESTART);
-			if (spawn(&ch_emerg, &f) > 0) {
+			if (spawn( &ch_emerg, &f) > 0) {
 				while ((rc = wait(&st)) != f) 
 					if (rc < 0 && errno == ECHILD) break;
 			} 	SETSIG(sa, SIGCHLD, chld_handler, SA_RESTART);
