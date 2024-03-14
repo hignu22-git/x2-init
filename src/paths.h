@@ -19,7 +19,7 @@
 #define RUNLEVEL_DEF_DM  "/etc/rc.d/rc.4" /*default runlevel with dm */
 #define ELS_LOG "/var/log/els.xijs"
 #define DEBUG_LOG "/var/log/x2-kernel-debug.xijs"
-
+#define XRCD	"/etc/xrc.d"
 #if 0
 #define INITLVL		"/etc/initrunlvl"	/* COMPAT: New runlevel */
 #define INITLVL2	"/var/log/initrunlvl"	/* COMPAT: New runlevel */

@@ -490,16 +490,14 @@ static
 				{
 					ch->new->exstat = st;
 					ch->new->flags |= ZOMBIE;
-				}
-				break;
+				}		break;
 			}
-		if (ch == NULL)
-		{
-			INITDBG(L_VB, "chld_handler: unknown child %d exited.",
-					pid);
+		if (ch == NULL) {
+			INITDBG(L_VB, "chld_handler: unknown child %d exited.", pid);
+			w_journal2x(L_XI, J1_INIT, J2_DEBUG ,
+				"chld_handler: unknown child %d exited.", pid);
 		}
-	}
-	errno = saved_errno;
+	}		errno = saved_errno;
 }
 
 /*
@@ -881,7 +879,7 @@ spawn(CHILD *ch, int *res)	{
 					"Id \"%s\" respawning too fast: disabled for %d minutes",
 					ch->id, SLEEPTIME / 60);
 			ch->flags &= ~RUNNING;
-			ch->flags |=  FAILING;
+			ch->flags |=  FAILING; 
 						/* Remember the time we stopped */
 			ch->tm = t;
 						/* Try again in 5 minutes */
@@ -1183,11 +1181,90 @@ static void check_kernel_console()
 	return;
 }
 #endif
+/*		
+	READ xRC-dir
+*/
+int 
+parseXRCs(void){
+	FILE* pf,*fp_x		;
+	int16_t f			;
+	char buf[256]   	;
+	DIR*  tabdir		;
+	char *p				;
+	short done 			;
+	int lineNo			;
+	struct dirent *file_entry; 	/* rc.d entry */
+	char *mainSEP ,endLine ; 	/* setarators */
+	char f_name[272]	;		/* size d_name + strlen /etc/rc.d/ */
+	xrcStruct *x_new	;
+	xrcParam  *paramX   ;
+	FILE *cmd_str[1035] ;
+	char *path	 [1035]	;
+	char *cmd_buf[10000];
+	int pid				;
 
+	CHILD *ch, *old, *i	; 		/* Pointers to CHILD structure */
+	char* rlevel ; /* rlevel without test and "ch" struct  */
+	
+	if ((tabdir = opendir(XRCD)) == NULL) 
+		w_journal2x(L_XI,J1_INIT,J2_ERROR,"xrc.d is not found !" );
+	while(done!=1)	{					/*	reading files in buffer	*/
+		if(tabdir != NULL) {
+			if((file_entry = readdir(tabdir)) != NULL) {
+				/* ignore files not like *.tab */
+				if (!strcmp(file_entry->d_name, ".") || !strcmp(file_entry->d_name, "..")) 
+					continue;
+				if (strlen (file_entry->d_name) 	 < 5 || 
+					strcmp (file_entry->d_name + strlen(file_entry->d_name) - 4, ".tab")) 
+					continue;
+				/* initialize filename */
+				memset(f_name, 0, sizeof(char) * 272) ;
+				snprintf(f_name, 272, "/etc/xrc.d/%s ", file_entry->d_name);
+				initlog(L_VB, "Reading: %s", f_name) ;
+				/* read file in rc.d only one entry per file */
+				if ((fp_x= fopen(f_name ,"r")) == NULL)  continue;
+				/* read the file while the line contain comment */
+				while (fgets(buf, sizeof(buf), fp_x) != NULL) {
+					for (p = buf; /* *p == ' ' || *p == '\t'*/ ; p++) ;
+					if (*p != '#' && *p != '\n') break ;
+				}		fclose(fp_x);
+				if (strlen(p) == 0) continue;	} else {/* end of readdir */
+				done = 1;
+				continue;
+			}
+		} else {	done = 1; continue; }
+		/*	-PARSER
+			ein schleife ist ein file
+			<mainSEP> : <endLine> ;
+		*/	lineNo++;
+		mainSEP = strsep(&p,":");
+		endLine = strsep(&p,";");
+		if(!strcmp(mainSEP, "BIN")) {	if(*p == '\t' || *p == ' ' ) p++ ;
+			paramX->bin = endLine ;
+		}else if(!strcmp(mainSEP, "PARAM")) {	 if(*p == "\t") *p = ' ' ; 
+			sprintf(paramX->param , " " ,endLine);
+		}else if(!strcmp(mainSEP, "TARGET")) {
+			if(*p == '\t' || *p == ' ' ) p++ ;
+			if ((!strcmp(endLine,"1") || 	!strcmp(endLine,"S") 
+				|| !strcmp(endLine,"s")) && !strcmp(ch->rlevel, endLine)) {
+				/* Check (effectiv and not ) user id  and pid*/
+				if ((pid = getpid()) == 0 ) break ;
+				if ( (getuid() != 0) && (geteuid() != 0) ) break ;  
+				/* Start process */
+				pf = popen(sprintf(cmd_str ,paramX->bin ,paramX->param),"r");
+				/* Copy console of command in array "cmd_buf" */
+				while (fgets(path, sizeof(path), pf) != NULL) strcat(cmd_buf, path);
+				paramX->rlevel = endLine;
+			}
+		}	/* Сlosing */
+		if(fp_x)	fclose(fp_x);
+		if(tabdir)	closedir(tabdir);	
+		if(pf)		pclose(pf);
+	}	return 0;
+}
 /* Read the inittab file. */
 static void
 read_inittab(void) {
-
 	FILE *fp;			 		/* The INITTAB file */
 	FILE *fp_tab;		 		/* The INITTABD files */
 	CHILD *head = NULL;	 		/* Head of linked list */
@@ -1371,8 +1448,8 @@ read_inittab(void) {
 	w_journal2x(L_XI, J1_INIT, J2_DEBUG, "Checking for children to kill");
 	INITDBG(L_VB, "Checking for children to kill");
 	for (round = 0; round < 2; round++) /* 0 or 1 */ { talk = 1;
-		for (ch = family; ch; ch = ch->next) {
-			ch->flags &= ~KILLME /* -5 */;
+		for (ch = family; ch; ch = ch->next) { /* read 3 pointers on child  */
+			ch->flags &= ~KILLME ;
 			if (ch->new == NULL) ch->flags |= KILLME;
 			/*	If the entry has changed, kill it anyway. Note that
 			 *	we do not check ch->process, only the "action" field.
@@ -1394,14 +1471,12 @@ read_inittab(void) {
 				ch->flags &= ~KILLME;
 				continue;
 			} w_journal2x(L_XI ,J1_INIT ,J2_DEBUG ," killing \"%s\" " ,ch->process);
-			if (round == 0) {	/******* Send TERM signal **********/
-				if (talk)
-					initlog(L_CO,"Sending processes configured via /etc/inittab the TERM signal");
+			if (round == 0) {	/* Send TERM sig */
+				if (talk)	initlog(L_CO,"Sending processes configured via /etc/inittab the TERM signal");
 				kill(-(ch->pid), SIGTERM);
 				foundOne = 1;
-			} if(round == 1) { /****** Send KILL signal and collect status ******/
-				if (talk)
-					initlog(L_CO,"Sending processes configured via /etc/inittab the KILL signal");
+			} if(round == 1) { /* KILL sig and collect status */
+				if (talk)	initlog(L_CO,"Sending processes configured via /etc/inittab the KILL signal");
 				kill(-(ch->pid), SIGKILL);
 				break;
 			} talk = 0;

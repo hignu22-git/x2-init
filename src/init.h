@@ -78,7 +78,18 @@ typedef struct  {
     char *initb  ;                         
     char *chroot ;      /* fast chroot to second system */    
 }        iCMD    ;
-
+typedef struct  {
+    char *mainSep;
+    char *endLine;
+}       xrcStruct;
+typedef struct  {
+    char *user  ;
+    char *group ;
+    char *args  ;
+    char *bin   ;
+    char *param ;
+    char *rlevel;
+}       xrcParam;
 
 int r_journal2x( char* _file_ ,char* desgin_viewing);
 int w_journal2x(int loglevel ,char* source ,char* msgType ,char* s ,...);
@@ -92,7 +103,6 @@ struct journal { char* id; char* state; char* process; };
 #define WAITING			32	/* We're waiting for this process */
 #define ZOMBIE			64	/* This process is already dead */
 #define XECUTED		    128	/* Set if spawned once or more times */
-
 
 /* Log levels. */
 #define L_CO	1		        /* Log on the console. */
