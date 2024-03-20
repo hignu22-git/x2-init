@@ -1253,7 +1253,7 @@ parseXRCs(void){
 				/* Start process */
 				pf = popen(sprintf(cmd_str ,paramX->bin ,paramX->param),"r");
 				/* Copy console of command in array "cmd_buf" */
- (fgets(path, sizeof(path), pf) != NULL) strcat(cmd_buf, path);
+				while (fgets(path, sizeof(path), pf) != NULL) strcat(cmd_buf, path);
 				paramX->rlevel = endLine;
 			}
 		}	/* Сlosing */
