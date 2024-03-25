@@ -1295,7 +1295,8 @@ int
 parseXRCs(void){
 	FILE* pf,*fp_x		;
 	int16_t f			;
-	char buf[256]   	;
+	char  buf [256]   	;
+	char* buff[10000]	;
 	DIR*  tabdir		;
 	char *p				;
 	short done 			;
@@ -1328,45 +1329,42 @@ parseXRCs(void){
 				memset(f_name, 0, sizeof(char) * 272) ;
 				snprintf(f_name, 272, "/etc/xrc.d/%s ", file_entry->d_name);
 				initlog(L_VB, "Reading: %s", f_name) ;
-				/* read file in rc.d only one entry per file */
 				if ((fp_x= fopen(f_name ,"r")) == NULL)  continue;
-				/* read the file while the line contain comment */
-				while (fgets(buf, sizeof(buf), fp_x) != NULL) {
-					for (p = buf; /* *p == ' ' || *p == '\t'*/ ; p++) ;
-					if (*p != '#' && *p != '\n') break ;
-				}		fclose(fp_x);
+				while (fgets(buf, sizeof(buf), fp_x) != NULL) { lineNo++ ;
+					for (p = buf; /* *p == ' ' || *p == '\t'*/ ; p++)    ;
+					if (*p != '#' && *p != '\n') break                   ;
+					buff[lineNo - 1] = p ;
+				}									fclose(fp_x);
 				if (strlen(p) == 0) continue;	} else {/* end of readdir */
 				done = 1;
 				continue;
 			}
 		} else {	done = 1; continue; }
-		/*	-PARSER
-			ein schleife ist ein file
-			<mainSEP> : <endLine> ;
-		*/	lineNo++;
-		mainSEP = strsep(&p,":");
-		endLine = strsep(&p,";");
-		if(!strcmp(mainSEP, "BIN")) {	if(*p == '\t' || *p == ' ' ) p++ ;
-			paramX->bin = endLine ;
-		}else if(!strcmp(mainSEP, "PARAM")) {	 if(*p == "\t") *p = ' ' ; 
-			sprintf(paramX->param , " " ,endLine);
-		}else if(!strcmp(mainSEP, "TARGET")) {
-			if(*p == '\t' || *p == ' ' ) p++ ;
-			if ((!strcmp(endLine,"1") || 	!strcmp(endLine,"S") 
-				|| !strcmp(endLine,"s")) && !strcmp(ch->rlevel, endLine)) {
-				/* Check (effectiv and not ) user id  and pid*/
-				if ((pid = getpid()) == 0 ) break ;
-				if ( (getuid() != 0) && (geteuid() != 0) ) break ;  
-				/* Start process */
-				pf = popen(sprintf(cmd_str ,paramX->bin ,paramX->param),"r");
-				/* Copy console of command in array "cmd_buf" */
-				while (fgets(path, sizeof(path), pf) != NULL) strcat(cmd_buf, path);
-				paramX->rlevel = endLine;
-			}
-		}	/* Сlosing */
-		if(fp_x)	fclose(fp_x);
-		if(tabdir)	closedir(tabdir);	
-		if(pf)		pclose(pf);
+		/*	-PARSER -ein schleife ist ein file -<mainSEP> : <endLine> ;*/
+		while ((*buff)++) {
+			mainSEP = strsep(&p,":");
+			endLine = strsep(&p,";");
+			if(!strcmp(mainSEP, "BIN")) {	if(*p == '\t' || *p == ' ' ) p++ ;
+				paramX->bin = endLine ;
+			}else if(!strcmp(mainSEP, "PARAM")) {	 if(*p == "\t") *p = ' ' ; 
+				sprintf(paramX->param , " " ,endLine);
+			}else if(!strcmp(mainSEP, "TARGET")) {
+				if(*p == '\t' || *p == ' ' ) p++ ;
+				if ((!strcmp(endLine,"1") || 	!strcmp(endLine,"S") 
+					|| !strcmp(endLine,"s")) && !strcmp(ch->rlevel, endLine)) {
+					/* Check (effectiv and not ) user id  and pid*/
+					if ((pid = getpid()) == 0 ) break ;
+					if ( (getuid() != 0) && (geteuid() != 0) ) break ;  
+					/* Start process */
+					pf = popen(sprintf(cmd_str ,paramX->bin ,paramX->param),"r");
+					/* Copy console of command in array "cmd_buf" */
+					while (fgets(path, sizeof(path), pf) != NULL) strcat(cmd_buf, path);
+					paramX->rlevel = endLine;
+				}
+			}	if(pf)		pclose(pf);
+		}
+		if (fp_x) fclose(fp_x);
+		if (tabdir) closedir(tabdir);
 	}	return 0;
 }		/* Read the inittab file. */
 static void

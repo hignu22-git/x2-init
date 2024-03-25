@@ -39,7 +39,12 @@ void print(char *fmt);
 /* from dowall.c */
 void wall(const char *text, int remote);
 
+#if DEBUG
 #define INITDBG(level, fmt, args...) initlog(level, fmt, ##args)
+#else 
+#define INITDBG(level, fmt ,args...)
+#endif 
+
 
 /* Actions to be taken by init */
 #define RESPAWN			1
