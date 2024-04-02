@@ -1292,7 +1292,8 @@ static void check_kernel_console()	{
 	READ xRC-dir
 */
 int 
-parseXRCs(void){
+r_xrc(void){
+#if RXRC_ENABLE
 	FILE* pf,*fp_x		;
 	int16_t f			;
 	char  buf [256]   	;
@@ -1318,14 +1319,19 @@ parseXRCs(void){
 		/*w_journal2x(L_XI,J1_INIT,J2_ERROR,"xrc.d is not found !" );*/
 	while(done!=1)	{					/*	reading files in buffer	*/
 		if(tabdir != NULL) {
-			if((file_entry = readdir(tabdir)) != NULL) {
-				/* ignore files not like *.tab */
+			if((file_entry = readdir(tabdir)) != NULL) 
+			{
+				/*
+				 * ignore files not like *.xrc
+				 */
 				if (!strcmp(file_entry->d_name, ".") || !strcmp(file_entry->d_name, "..")) 
 					continue;
 				if (strlen (file_entry->d_name) 	 < 5 || 
-					strcmp (file_entry->d_name + strlen(file_entry->d_name) - 4, ".tab")) 
+					strcmp (file_entry->d_name + strlen(file_entry->d_name) - 4, ".xrc")) 
 					continue;
-				/* initialize filename */
+				/* 
+				 * initialize filename 
+				 */
 				memset(f_name, 0, sizeof(char) * 272) ;
 				snprintf(f_name, 272, "/etc/xrc.d/%s ", file_entry->d_name);
 				initlog(L_VB, "Reading: %s", f_name) ;
@@ -1333,40 +1339,54 @@ parseXRCs(void){
 				while (fgets(buf, sizeof(buf), fp_x) != NULL) { lineNo++ ;
 					for (p = buf; /* *p == ' ' || *p == '\t'*/ ; p++)    ;
 					if (*p != '#' && *p != '\n') break                   ;
-					buff[lineNo - 1] = p ;
-				}									fclose(fp_x);
-				if (strlen(p) == 0) continue;	} else {/* end of readdir */
+					buff[lineNo - 1] = p ;	
+					/* 
+					 * Parser
+					 * Type => [Variable(mainSEP) ] : [State(endLine) ] ; \n 
+					 */
+					mainSEP = strsep(&p,":");
+					endLine = strsep(&p,";");
+					if(!strcmp(mainSEP, "BIN")) {	if(*p == '\t' || *p == ' ' ) p++ ;
+						paramX->bin = endLine ;
+					} else if(!strcmp(mainSEP, "PARAM")) {	 if(*p == "\t") *p = ' ' ; 
+						sprintf(paramX->param , " " ,endLine);
+					}else if(!strcmp(mainSEP, "PID")) {      if(*p == '\t' || *p == ' ' ) p++ ;
+						paramX->pid = endLine ;
+					}else if(!strcmp(mainSEP, "TARGET")) {
+						if(*p == '\t' || *p == ' ' ) p++ ;
+						if ((!strcmp(endLine,"1") || 	!strcmp(endLine,"S") || 
+							 !strcmp(endLine,"s")) && !strcmp(ch->rlevel, endLine)) {
+							/* Check (effectiv and not ) user id  and pid*/
+							if ((pid = getpid()) == 0 ) break ;
+							if ( (getuid() != 0) && (geteuid() != 0) ) break ; 
+							if ( (*paramX).pid  != NULL) 
+								if (pid != paramX->pid) 
+									break ;
+							/* Start process */
+							pf = popen(sprintf(cmd_str ,paramX->bin ,paramX->param),"r");
+							/* Copy console of command in array "cmd_buf" */
+							while (fgets(path, sizeof(path), pf) != NULL) strcat(cmd_buf, path);
+							paramX->rlevel = endLine;
+						}
+					}	if(pf)	pclose(pf);	
+				}	
+				if (strlen(p) == 0) continue;									
+				if (fp_x)			fclose(fp_x);	
+			} 
+			else {   
+				if (tabdir) closedir(tabdir);
 				done = 1;
 				continue;
 			}
 		} else {	done = 1; continue; }
-		/*	-PARSER -ein schleife ist ein file -<mainSEP> : <endLine> ;*/
-		while ((*buff)++) {
-			mainSEP = strsep(&p,":");
-			endLine = strsep(&p,";");
-			if(!strcmp(mainSEP, "BIN")) {	if(*p == '\t' || *p == ' ' ) p++ ;
-				paramX->bin = endLine ;
-			}else if(!strcmp(mainSEP, "PARAM")) {	 if(*p == "\t") *p = ' ' ; 
-				sprintf(paramX->param , " " ,endLine);
-			}else if(!strcmp(mainSEP, "TARGET")) {
-				if(*p == '\t' || *p == ' ' ) p++ ;
-				if ((!strcmp(endLine,"1") || 	!strcmp(endLine,"S") 
-					|| !strcmp(endLine,"s")) && !strcmp(ch->rlevel, endLine)) {
-					/* Check (effectiv and not ) user id  and pid*/
-					if ((pid = getpid()) == 0 ) break ;
-					if ( (getuid() != 0) && (geteuid() != 0) ) break ;  
-					/* Start process */
-					pf = popen(sprintf(cmd_str ,paramX->bin ,paramX->param),"r");
-					/* Copy console of command in array "cmd_buf" */
-					while (fgets(path, sizeof(path), pf) != NULL) strcat(cmd_buf, path);
-					paramX->rlevel = endLine;
-				}
-			}	if(pf)		pclose(pf);
-		}
-		if (fp_x) fclose(fp_x);
-		if (tabdir) closedir(tabdir);
-	}	return 0;
-}		/* Read the inittab file. */
+	}				
+#else 
+#endif
+	return 0;
+}		
+/* 
+ * Read the inittab file. 
+ */
 static void
 read_inittab(void) {
 	FILE *fp;			 		/* The INITTAB file */
@@ -1548,11 +1568,10 @@ read_inittab(void) {
 	/*	We're done. */
 	if (fp) fclose(fp);
 	if (tabdir) closedir(tabdir);
-
 #ifdef __linux__
 	check_kernel_console();
 #endif
-
+	/* READ XRC.D */	r_xrc();
 	/*	Loop through the list of children, and see if they need to be killed. */
 	INITDBG(L_VB, "Checking for children to kill");
 	for (round = 0; round < 2; round++) {

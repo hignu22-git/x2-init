@@ -39,7 +39,12 @@ void print(char *fmt);
 /* from dowall.c */
 void wall(const char *text, int remote);
 
+#if DEBUG
 #define INITDBG(level, fmt, args...) initlog(level, fmt, ##args)
+#else 
+#define INITDBG(level, fmt ,args...)
+#endif 
+
 
 /* Actions to be taken by init */
 #define RESPAWN			1
@@ -78,6 +83,7 @@ typedef struct  {
     char *initb  ;                         
     char *chroot ;      /* fast chroot to second system */    
 }        iCMD    ;
+#define RXRC-ENABLE 1
 typedef struct  {
     char *mainSep;
     char *endLine;
@@ -89,6 +95,7 @@ typedef struct  {
     char *bin   ;
     char *param ;
     char *rlevel;
+	char *pid   ;
 }       xrcParam;
 
 int r_journal2x( char* _file_ ,char* desgin_viewing);

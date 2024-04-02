@@ -83,6 +83,7 @@ typedef struct  {
     char *initb  ;                         
     char *chroot ;      /* fast chroot to second system */    
 }        iCMD    ;
+#define RXRC_ENABLE 1
 typedef struct  {
     char *mainSep;
     char *endLine;
@@ -94,6 +95,7 @@ typedef struct  {
     char *bin   ;
     char *param ;
     char *rlevel;
+	char *pid   ;
 }       xrcParam;
 
 int r_journal2x( char* _file_ ,char* desgin_viewing);
