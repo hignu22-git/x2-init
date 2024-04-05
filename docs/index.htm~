@@ -38,9 +38,6 @@
         the initialization system is based on SysVinit, but the latter is already obsolete
         <br/> +--------------------------+<br/>     
       </div>
-    </div>
-    <br/>
-    <div class="INFO">
       <h4>
         Components of x2-init  => :
       </h4>
@@ -55,6 +52,7 @@
 		<br/>
         +--------------------------+<br/> 
         PROJECT IN ACTIVE DEVELOPMENT (RELEASE 1.0 - 2024-May-8 ) :*) ;
+		<br/> 
 	  </div>
     </div>
     <br/>
@@ -68,7 +66,7 @@
     <div class="INFO">
       <center>
         <p>
-		a donation to the author can be a home-brewed beer (hignu22) ) 
+		A donation to the author can be a home-brewed beer (hignu22) ) 
         +--------------------------+<br/> 
           DONATE MONERO => 
           <i style="color:darkorange" >
