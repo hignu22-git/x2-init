@@ -83,7 +83,7 @@ typedef struct  {
     char *initb  ;                         
     char *chroot ;      /* fast chroot to second system */    
 }        iCMD    ;
-#define RXRC-ENABLE 1
+#define RXRC_ENABLE 1
 typedef struct  {
     char *mainSep;
     char *endLine;

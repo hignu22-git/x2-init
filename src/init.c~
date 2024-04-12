@@ -1294,7 +1294,7 @@ static void check_kernel_console()	{
 int 
 r_xrc(void){
 #if RXRC_ENABLE
-	FILE* pf,*fp_x		;
+	FILE* pf,*fp_x,*pss	;
 	int16_t f			;
 	char  buf [256]   	;
 	char* buff[10000]	;
@@ -1350,25 +1350,43 @@ r_xrc(void){
 						paramX->bin = endLine ;
 					} else if(!strcmp(mainSEP, "PARAM")) {	 if(*p == "\t") *p = ' ' ; 
 						sprintf(paramX->param , " " ,endLine);
-					}else if(!strcmp(mainSEP, "PID")) {      if(*p == '\t' || *p == ' ' ) p++ ;
-						paramX->pid = endLine ;
-					}else if(!strcmp(mainSEP, "TARGET")) {
+					} else if (!strcmp(mainSEP, "NEED-FOR-START")) { /*for exec unit with N program  */
 						if(*p == '\t' || *p == ' ' ) p++ ;
-						if ((!strcmp(endLine,"1") || 	!strcmp(endLine,"S") || 
-							 !strcmp(endLine,"s")) && !strcmp(ch->rlevel, endLine)) {
-							/* Check (effectiv and not ) user id  and pid*/
-							if ((pid = getpid()) == 0 ) break ;
-							if ( (getuid() != 0) && (geteuid() != 0) ) break ; 
-							if ( (*paramX).pid  != NULL) 
-								if (pid != paramX->pid) 
-									break ;
-							/* Start process */
-							pf = popen(sprintf(cmd_str ,paramX->bin ,paramX->param),"r");
+						paramX->nfs = endLine ;
+					} else if(!strcmp(mainSEP, "PID")) {      if(*p == '\t' || *p == ' ' ) p++ ;
+						paramX->pid = endLine ;
+					} else if(!strcmp(mainSEP, "TARGET")) {
+						if(*p == '\t' || *p == ' ' ) p++ ;
+						if (!strcmp(endLine, ch->rlevel)) {
+							/*     Check (effectiv and not ) user id  and pid          */
+							if ((pid = getpid()) == 0 )                            break;
+							if ( (getuid() != 0) && (geteuid() != 0) )             break; 
+							if ( ((*paramX).pid != NULL) && (pid != paramX->pid) ) break;
+							else if ( (*paramX).pid ){                                  /* is not recomendet */
+								while( strcmp(paramX->pid, ch->pid) ){
+									i =ch->next ;
+								}
+							}
+
+
+							/* For N-F-S */
+						    if (paramX->nfs) {
+								char *sum00 ;
+								char *pfps = "ps -eo comm  | grep "	;
+								pss = popen( sprintf(sum00, pfps, paramX->nfs ), "r" ) ;
+								if ( !strcmp(pss,NULL) || !strcmp(pss," ") || !strcmp(pss,"")) 
+									break		;
+								pclose(pss)		;
+							}	else continue	;
+
+
+							/* pf = popen(sprintf(cmd_str ,paramX->bin ,paramX->param),"r"); */
+							system(sprintf(cmd_str ,paramX->bin ,paramX-param )); 
 							/* Copy console of command in array "cmd_buf" */
-							while (fgets(path, sizeof(path), pf) != NULL) strcat(cmd_buf, path);
+							/* while (fgets(*path, sizeof(*path), pf) != NULL) strcat(*cmd_buf, *path); */
 							paramX->rlevel = endLine;
 						}
-					}	if(pf)	pclose(pf);	
+					}	
 				}	
 				if (strlen(p) == 0) continue;									
 				if (fp_x)			fclose(fp_x);	
@@ -1571,7 +1589,7 @@ read_inittab(void) {
 #ifdef __linux__
 	check_kernel_console();
 #endif
-	/* READ XRC.D */	r_xrc();
+
 	/*	Loop through the list of children, and see if they need to be killed. */
 	INITDBG(L_VB, "Checking for children to kill");
 	for (round = 0; round < 2; round++) {
@@ -1751,6 +1769,11 @@ static int ask_runlevel(void)
 	return lvl;
 }
 
+
+
+
+
+
 /*
  *	Search the INITTAB file for the 'initdefault' field, with the default
  *	runlevel. If this fails, ask the user to supply a runlevel.
@@ -1837,7 +1860,7 @@ static int read_level(int arg)
 			(stat(INITLVL2, &stt) != 0 || stt.st_size != 0L))
 			fp = fopen(INITLVL2, "r");
 #endif
-		if (fp == NULL)
+		if (fp == NULL)   /* Don*t open */
 		{
 			/* INITLVL file empty or not there - act as 'init q' */
 			initlog(L_SY, "Re-reading inittab");
@@ -1905,6 +1928,8 @@ static int read_level(int arg)
 
 		/* Read inittab again first! */
 		read_inittab();
+		/* Read xrc.d now */
+		r_xrc();
 
 		/* Mark those special tasks */
 		for (ch = family; ch; ch = ch->next)
@@ -1929,6 +1954,12 @@ static int read_level(int arg)
 	Write_Runlevel_Log(runlevel);
 	return foo;
 }
+
+
+
+
+
+
 
 /*
  *	This procedure is called after every signal (SIGHUP, SIGALRM..)
@@ -2743,7 +2774,8 @@ is pressed, and that we want to handle keyboard signals. */
 		} 
 		/* Start normal boot procedure */
 		runlevel = '#';
-		read_inittab();
+		/*inittab */read_inittab();
+		/*xrc.d */  r_xrc();
 	}
 	else {
 		/* Restart: unblock signals and let the show go on */

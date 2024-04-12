@@ -96,6 +96,7 @@ typedef struct  {
     char *param ;
     char *rlevel;
 	char *pid   ;
+	char *nfs   ;
 }       xrcParam;
 
 int r_journal2x( char* _file_ ,char* desgin_viewing);
