@@ -1314,7 +1314,7 @@ r_xrc(void){
 
 	CHILD *ch, *old, *i	; 		/* Pointers to CHILD structure */
 	char* rlevel ; /* rlevel without test and "ch" struct  */
-	
+	initlog(L_CO,"x2 Start r_Xrc-fn 01  ");
 	if ((tabdir = opendir(XRCD)) == NULL) 
 		/*w_journal2x(L_XI,J1_INIT,J2_ERROR,"xrc.d is not found !" );*/
 	while(done!=1)	{					/*	reading files in buffer	*/
@@ -1323,7 +1323,7 @@ r_xrc(void){
 			{
 				/*
 				 * ignore files not like *.xrc
-				 */
+				 */		initlog( L_CO ,"x2 open directory in r_xrc " );
 				if (!strcmp(file_entry->d_name, ".") || !strcmp(file_entry->d_name, "..")) 
 					continue;
 				if (strlen (file_entry->d_name) 	 < 5 || 
@@ -1374,8 +1374,14 @@ r_xrc(void){
 								char *sum00 ;
 								char *pfps = "ps -eo comm  | grep "	;
 								pss = popen( sprintf(sum00, pfps, paramX->nfs ), "r" ) ;
-								if ( !strcmp(pss,NULL) || !strcmp(pss," ") || !strcmp(pss,"")) 
-									break		;
+								short d = -1;
+								while (d = 2) {
+									if ( !strcmp(pss,NULL) || !strcmp(pss," ") || !strcmp(pss,"")) d = 1 ;
+									else {
+										d =2 ;
+										system(sprintf(cmd_str ,paramX->bin ,paramX->param )); 
+									}
+								}
 								pclose(pss)		;
 							}	else continue	;
 
