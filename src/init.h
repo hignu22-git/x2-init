@@ -89,6 +89,7 @@ typedef struct  {
     char *endLine;
 }       xrcStruct;
 typedef struct  {
+	int *wait_rt; 
     char *user  ;
     char *group ;
     char *args  ;

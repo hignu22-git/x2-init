@@ -1311,6 +1311,7 @@ r_xrc(void){
 	char *path	 [1035]	;
 	char *cmd_buf[10000];
 	int pid				;
+	short break_v   =9  ;
 
 	CHILD *ch, *old, *i	; 		/* Pointers to CHILD structure */
 	char* rlevel ; /* rlevel without test and "ch" struct  */
@@ -1335,6 +1336,7 @@ r_xrc(void){
 				memset(f_name, 0, sizeof(char) * 272) ;
 				snprintf(f_name, 272, "/etc/xrc.d/%s ", file_entry->d_name);
 				initlog(L_VB, "Reading: %s", f_name) ;
+			
 				if ((fp_x= fopen(f_name ,"r")) == NULL)  continue;
 				while (fgets(buf, sizeof(buf), fp_x) != NULL) { lineNo++ ;
 					for (p = buf; /* *p == ' ' || *p == '\t'*/ ; p++)    ;
@@ -1346,18 +1348,21 @@ r_xrc(void){
 					 */
 					mainSEP = strsep(&p,":");
 					endLine = strsep(&p,";");
-					if(!strcmp(mainSEP, "BIN")) {	if(*p == '\t' || *p == ' ' ) p++ ;
+					if(!strcmp(mainSEP, "BIN")) {
 						paramX->bin = endLine ;
-					} else if(!strcmp(mainSEP, "PARAM")) {	 if(*p == "\t") *p = ' ' ; 
+					} else if(!strcmp(mainSEP, "PARAM")) {	 
 						sprintf(paramX->param , " " ,endLine);
 					} else if (!strcmp(mainSEP, "NEED-FOR-START")) { /*for exec unit with N program  */
-						if(*p == '\t' || *p == ' ' ) p++ ;
 						paramX->nfs = endLine ;
-					} else if(!strcmp(mainSEP, "PID")) {      if(*p == '\t' || *p == ' ' ) p++ ;
+					}else if (!strcmp(mainSEP, "WAIT-TIME")) {  
+						if (strcmp(endLine, "")) {
+							paramX->wait_rt = (int*)endLine ;
+						}
+					} else if(!strcmp(mainSEP, "PID")) {    
 						paramX->pid = endLine ;
-					} else if(!strcmp(mainSEP, "TARGET")) {
-						if(*p == '\t' || *p == ' ' ) p++ ;
-						if (!strcmp(endLine, ch->rlevel)) {
+					} else if(!strcmp(mainSEP, "TARGET")) {  /*This is a final argument in end file */
+						if (!strcmp(endLine, ch->rlevel)) 
+						{
 							/*     Check (effectiv and not ) user id  and pid          */
 							if ((pid = getpid()) == 0 )                            break;
 							if ( (getuid() != 0) && (geteuid() != 0) )             break; 
@@ -1374,23 +1379,23 @@ r_xrc(void){
 								char *sum00 ;
 								char *pfps = "ps -eo comm  | grep "	;
 								pss = popen( sprintf(sum00, pfps, paramX->nfs ), "r" ) ;
-								if ( !strcmp(pss,NULL) || !strcmp(pss," ") || !strcmp(pss,"")) break ;
-								else {
-									short d = -1;
-									while (d = 2) {
-										if ( !strcmp(pss,NULL) || !strcmp(pss," ") || !strcmp(pss,"")) d = 1 ;
-										else {
-											d =2 ;
-											system(sprintf(cmd_str ,paramX->bin ,paramX->param )); 
-										}
+								short d = -1;
+								while (d = 2) {
+									break_v = 1;
+									if ( !strcmp(pss,NULL) || !strcmp(pss," ") || !strcmp(pss,"")) d = 1 ;
+									else {
+										d =2 ;
+										system(sprintf(cmd_str ,paramX->bin ,paramX->param )); 
 									}
-								}	
+								}
 								pclose(pss)		;
 							}	else continue	;
 
 
 							/* pf = popen(sprintf(cmd_str ,paramX->bin ,paramX->param),"r"); */
-							system(sprintf(cmd_str ,paramX->bin ,paramX->param )); 
+							if  (break_v == 0)
+								system(sprintf(cmd_str ,paramX->bin ,paramX->param )); 
+							
 							/* Copy console of command in array "cmd_buf" */
 							/* while (fgets(*path, sizeof(*path), pf) != NULL) strcat(*cmd_buf, *path); */
 							paramX->rlevel = endLine;
