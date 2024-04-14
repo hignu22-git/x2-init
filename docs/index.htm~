@@ -36,7 +36,7 @@
         x2-init is created as a modern and portable initialization system for gnu operating systems on the linux kernel.Putting safety , speed of operation and ease of use in the first place .Development is conducted primarily under slackware GNU/linux, there will also be support for Devuan and Arch
         <br/> +--------------------------+<br/>
         the initialization system is based on SysVinit, but the latter is already obsolete
-        <br/> +--------------------------+<br/>     
+        <br/>     
       </div>
       <h4>
         Components of x2-init  => :
