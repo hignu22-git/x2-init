@@ -96,8 +96,9 @@ typedef struct  {
     char *bin   ;
     char *param ;
     char *rlevel;
-	char *pid   ;
+	int  pid    ;
 	char *nfs   ;
+	char *onRestart;
 }       xrcParam;
 
 int r_journal2x( char* _file_ ,char* desgin_viewing);

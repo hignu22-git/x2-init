@@ -1307,14 +1307,17 @@ r_xrc(void){
 	char f_name[272]	;		/* size d_name + strlen /etc/rc.d/ */
 	xrcStruct *x_new	;
 	xrcParam  *paramX   ;
-	FILE *cmd_str[1035] ;
+	char *cmd_str[1035] ;
+	char *cmd_st2[1035] ;
 	char *path	 [1035]	;
 	char *cmd_buf[10000];
 	int pid				;
-	short break_v   =9  ;
+	short break_v       ;
 
 	CHILD *ch, *old, *i	; 		/* Pointers to CHILD structure */
 	char* rlevel ; /* rlevel without test and "ch" struct  */
+	struct sigaction sa ;
+
 	initlog(L_CO,"x2 Start r_Xrc-fn 01  ");
 	if ((tabdir = opendir(XRCD)) == NULL) 
 		/*w_journal2x(L_XI,J1_INIT,J2_ERROR,"xrc.d is not found !" );*/
@@ -1327,7 +1330,7 @@ r_xrc(void){
 				 */		initlog( L_CO ,"x2 open directory in r_xrc " );
 				if (!strcmp(file_entry->d_name, ".") || !strcmp(file_entry->d_name, "..")) 
 					continue;
-				if (strlen (file_entry->d_name) 	 < 5 || 
+				if (strlen (file_entry->d_name)  < 5 || 
 					strcmp (file_entry->d_name + strlen(file_entry->d_name) - 4, ".xrc")) 
 					continue;
 				/* 
@@ -1352,29 +1355,20 @@ r_xrc(void){
 						paramX->bin = endLine ;
 					} else if(!strcmp(mainSEP, "PARAM")) {	 
 						sprintf(paramX->param , " " ,endLine);
-					} else if (!strcmp(mainSEP, "NEED-FOR-START")) { /*for exec unit with N program  */
+					} else if (!strcmp(mainSEP, "NEED-FOR-START")) { /* for exec unit with N program.  */
 						paramX->nfs = endLine ;
-					}else if (!strcmp(mainSEP, "WAIT-TIME")) {  
+					}else if (!strcmp(mainSEP, "CONSOLE-STAT")) {  /* mode for unit restart */
 						if (strcmp(endLine, "")) {
 							paramX->wait_rt = (int*)endLine ;
 						}
+					} else if(!strcmp(mainSEP, "RESTART-ON") ){
+						paramX->onRestart = endLine ;
 					} else if(!strcmp(mainSEP, "PID")) {    
 						paramX->pid = endLine ;
 					} else if(!strcmp(mainSEP, "TARGET")) {  /*This is a final argument in end file */
 						if (!strcmp(endLine, ch->rlevel)) 
 						{
-							/*     Check (effectiv and not ) user id  and pid          */
-							if ((pid = getpid()) == 0 )                            break;
-							if ( (getuid() != 0) && (geteuid() != 0) )             break; 
-							if ( ((*paramX).pid != NULL) && (pid != paramX->pid) ) break;
-							else if ( (*paramX).pid ){                                  /* is not recomendet */
-								while( strcmp(paramX->pid, ch->pid) ){
-									i =ch->next ;
-								}
-							}
-
-
-							/* For N-F-S */
+					
 						    if (paramX->nfs) {
 								char *sum00 ;
 								char *pfps = "ps -eo comm  | grep "	;
@@ -1389,15 +1383,42 @@ r_xrc(void){
 									}
 								}
 								pclose(pss)		;
-							}	else continue	;
+							}
 
+							if(!paramX->pid) {
+								pss = popen("pgrep ",paramX->bin);
+								sprintf(paramX->pid, pss);
+								pclose(pss);
+							}
 
-							/* pf = popen(sprintf(cmd_str ,paramX->bin ,paramX->param),"r"); */
-							if  (break_v == 0)
-								system(sprintf(cmd_str ,paramX->bin ,paramX->param )); 
+							if(paramX->onRestart) { /*Restart unit */
+								/*
+								 *	onfailure   - if program is crash 
+								 *	non-kill    - if program killed - Restart 
+								 *	console-log - depending on the console logs *(see CONSOLE-STAT )
+								 */
+								break_v == 1;
+								char *cmdp = "ps -eo comm | grep ";
+								if     ( !strcmp(paramX->onRestart,"non-kill"   ) ){
+									pf  = popen( sprintf(cmd_str ,paramX->bin ,paramX->param ),"r");
+									pss = popen( sprintf(cmd_st2 , cmdp       ,paramX->bin   ),"r");
+									if (  !strcmp(pss, "")) {
+										kill(paramX->pid ,SIGTERM );
+										/* SETSIG(sa, SIGTERM, signal_handler, 0); */
+								    }
+									pclose(pf);
+								}else if( !strcmp(paramX->onRestart,"console-log") ){	
+									pf  = popen( sprintf(cmd_str ,paramX->bin ,paramX->param),"r");
+								
+									pclose(pf);
+								}else if( !strcmp(paramX->onRestart,"console-log") ){
+									pf  = popen( sprintf(cmd_str ,paramX->bin ,paramX->param),"r");
+
+									pclose(pf);
+								}
+							}
 							
-							/* Copy console of command in array "cmd_buf" */
-							/* while (fgets(*path, sizeof(*path), pf) != NULL) strcat(*cmd_buf, *path); */
+							if  (break_v == 0) system(sprintf(cmd_str ,paramX->bin ,paramX->param )); 
 							paramX->rlevel = endLine;
 						}
 					}	
@@ -1710,7 +1731,7 @@ read_inittab(void) {
 		unlink(INITLVL2);
 	}
 #endif
-}
+r_xrc();		}
 
 /*
  *	Walk through the family list and start up children.
@@ -2788,8 +2809,7 @@ is pressed, and that we want to handle keyboard signals. */
 		} 
 		/* Start normal boot procedure */
 		runlevel = '#';
-		/*inittab */read_inittab();
-		/*xrc.d */  r_xrc();
+		/*inittab */read_inittab() ;
 	}
 	else {
 		/* Restart: unblock signals and let the show go on */
