@@ -1288,16 +1288,44 @@ static void check_kernel_console()	{
 }
 #endif
 
+
+
+pid_t 
+rst_xrcCall( pid_t pPid ,char* path ,FILE* pf, FILE* pss, char* tmp0res, char* cmd_str){ /* onRestart->onFailure->newPr */
+	xrcParam *paramX ;
+
+	if (pPid == 0){   /* Done . */
+		while (fgets(path, sizeof(path), pss) != NULL) { strcat(tmp0res, path); }
+		
+		if ( !strcmp(tmp0res ,"")) {		
+			pclose(pf);		
+			pf  = popen( sprintf(cmd_str ,paramX->bin ,paramX->param),"r");					
+		}
+								
+		if (( pss || pf ) || ( pss && pf )) {
+			pclose(pss);
+			pclose(pf );
+		}
+	}
+	else if(pPid == -1){
+		exit(1);
+	}
+	exit(0);
+}
+
+
 /*		
 	READ xRC-dir
 */
 int 
 r_xrc(void){
 #if RXRC_ENABLE
-	FILE* pf,*fp_x,*pss	;
-	int16_t f			;
+
+	FILE* pf,*fp_x  	;
+	FILE* pss2, *pss	;
+	
+	pid_t reg_rst_errn  ;
 	char  buf [256]   	;
-	char* buff[10000]	;
 	DIR*  tabdir		;
 	char *p				;
 	short done 			;
@@ -1305,18 +1333,16 @@ r_xrc(void){
 	struct dirent *file_entry; 	/* rc.d entry */
 	char *mainSEP ,endLine ; 	/* setarators */
 	char f_name[272]	;		/* size d_name + strlen /etc/rc.d/ */
-	xrcStruct *x_new	;
 	xrcParam  *paramX   ;
 	char *cmd_str[1035] ;
 	char *cmd_st2[1035] ;
-	char *path	 [1035]	;
-	char *cmd_buf[10000];
-	int pid				;
+	char **buff         ;
 	short break_v       ;
 
-	CHILD *ch, *old, *i	; 		/* Pointers to CHILD structure */
-	char* rlevel ; /* rlevel without test and "ch" struct  */
-	struct sigaction sa ;
+	char *path ,*tmp0res ;
+	CHILD *ch /*,*old, *i */	; 		/* Pointers to CHILD structure */
+	/*struct sigaction sa ; */
+	pid_t pet            ; 
 
 	initlog(L_CO,"x2 Start r_Xrc-fn 01  ");
 	if ((tabdir = opendir(XRCD)) == NULL) 
@@ -1363,12 +1389,9 @@ r_xrc(void){
 						}
 					} else if(!strcmp(mainSEP, "RESTART-ON") ){
 						paramX->onRestart = endLine ;
-					} else if(!strcmp(mainSEP, "PID")) {    
-						paramX->pid = endLine ;
 					} else if(!strcmp(mainSEP, "TARGET")) {  /*This is a final argument in end file */
 						if (!strcmp(endLine, ch->rlevel)) 
-						{
-					
+						{	
 						    if (paramX->nfs) {
 								char *sum00 ;
 								char *pfps = "ps -eo comm  | grep "	;
@@ -1385,37 +1408,32 @@ r_xrc(void){
 								pclose(pss)		;
 							}
 
-							if(!paramX->pid) {
-								pss = popen("pgrep ",paramX->bin);
-								sprintf(paramX->pid, pss);
-								pclose(pss);
-							}
 
 							if(paramX->onRestart) { /*Restart unit */
 								/*
-								 *	onfailure   - if program is crash 
-								 *	non-kill    - if program killed - Restart 
-								 *	console-log - depending on the console logs *(see CONSOLE-STAT )
+								 *	onfailure    - if program is crash 
+								 *  sigstop      - if send signal sigstop 
 								 */
 								break_v == 1;
 								char *cmdp = "ps -eo comm | grep ";
-								if     ( !strcmp(paramX->onRestart,"non-kill"   ) ){
-									pf  = popen( sprintf(cmd_str ,paramX->bin ,paramX->param ),"r");
-									pss = popen( sprintf(cmd_st2 , cmdp       ,paramX->bin   ),"r");
-									if (  !strcmp(pss, "")) {
-										kill(paramX->pid ,SIGTERM );
-										/* SETSIG(sa, SIGTERM, signal_handler, 0); */
-								    }
-									pclose(pf);
-								}else if( !strcmp(paramX->onRestart,"console-log") ){	
-									pf  = popen( sprintf(cmd_str ,paramX->bin ,paramX->param),"r");
 								
-									pclose(pf);
-								}else if( !strcmp(paramX->onRestart,"console-log") ){
-									pf  = popen( sprintf(cmd_str ,paramX->bin ,paramX->param),"r");
-
-									pclose(pf);
+								if     ( !strcmp(paramX->onRestart,"sigstop"   ) ){
+									system(sprintf(cmd_str ,paramX->bin ,paramX->param ));
+									pss = popen( sprintf(cmd_st2 , cmdp       ,paramX->bin   ),"r");
+									if (  !strcmp(pss, "")) 
+										kill( paramX->pid ,SIGCONT );
+									if (pf) pclose(pss);
 								}
+								else if( !strcmp(paramX->onRestart,"onFailure") ){	
+									pf  = popen( sprintf(cmd_str ,paramX->bin ,paramX->param),"r");
+									pss = popen( sprintf(cmd_st2 , cmdp ,paramX->bin   ), "r" );
+									/* Calls */
+									pet = vfork() ;
+									reg_rst_errn= rst_xrcCall(pet ,path ,pf ,pss ,tmp0res ,cmd_str) ;
+									if (reg_rst_errn= -1){
+										initlog(L_VB,"ERROR => xrc->rst->onFailure !!!!");
+									}
+								}	
 							}
 							
 							if  (break_v == 0) system(sprintf(cmd_str ,paramX->bin ,paramX->param )); 
@@ -1425,8 +1443,7 @@ r_xrc(void){
 				}	
 				if (strlen(p) == 0) continue;									
 				if (fp_x)			fclose(fp_x);	
-			} 
-			else {   
+			} else {   
 				if (tabdir) closedir(tabdir);
 				done = 1;
 				continue;
