@@ -158,7 +158,7 @@ static void send_state(int fd)
  *      the function is longer and takes approximately the same amount of
  *      time to do one big fgets and checks as it does to do a pile of getcs.
  *      We don't benefit from switching.
- *      - Jesse
+ *      - Jesse (From sysvinit )
  */
 static int get_string(char *p, int size, FILE *f)
 {
@@ -981,7 +981,7 @@ spawn(CHILD *ch, int *res) {
 				ptr++;
 			args[f] = ptr;
 
-			/* May be trailing space.. */
+		/* May be trailing space.. */
 			if (*ptr == 0)
 				break;
 
@@ -1286,8 +1286,9 @@ static void check_kernel_console()	{
 	fclose(fp);
 	return;
 }
-#endif
 
+#endif
+#if RXRC_ENABLE
 
 
 pid_t 
@@ -1295,11 +1296,11 @@ rst_xrcCall( pid_t pPid ,char* path ,FILE* pf, FILE* pss, char* tmp0res, char* c
 	xrcParam *paramX ;
 
 	if (pPid == 0){   /* Done . */
-		while (fgets(path, sizeof(path), pss) != NULL) { strcat(tmp0res, path); }
+		while (get_string ( path, sizeof(path), pss )) { strcat(tmp0res, path); }
 		
 		if ( !strcmp(tmp0res ,"")) {		
 			pclose(pf);		
-			pf  = popen( sprintf(cmd_str ,paramX->bin ,paramX->param),"r");					
+			pf  = popen( cmd_str,"r");					
 		}
 								
 		if (( pss || pf ) || ( pss && pf )) {
@@ -1313,9 +1314,12 @@ rst_xrcCall( pid_t pPid ,char* path ,FILE* pf, FILE* pss, char* tmp0res, char* c
 }
 
 
+#else
+#endif
 /*		
 	READ xRC-dir
 */
+
 int 
 r_xrc(void){
 #if RXRC_ENABLE
@@ -1365,8 +1369,8 @@ r_xrc(void){
 				snprintf(f_name, 272, "/etc/xrc.d/%s ", file_entry->d_name);
 				initlog(L_VB, "Reading: %s", f_name) ;
 			
-				if ((fp_x= fopen(f_name ,"r")) == NULL)  continue;
-				while (fgets(buf, sizeof(buf), fp_x) != NULL) { lineNo++ ;
+				if ((fp_x= fopen(f_name ,"r")) == NULL)  		continue ;
+				while (get_string(buf, sizeof(buf), fp_x) ) { 	lineNo++ ;
 					for (p = buf; /* *p == ' ' || *p == '\t'*/ ; p++)    ;
 					if (*p != '#' && *p != '\n') break                   ;
 					buff[lineNo - 1] = p ;	
@@ -1394,21 +1398,24 @@ r_xrc(void){
 						    if (paramX->nfs) {
 								char *sum00 ;
 								char *pfps = "ps -eo comm  | grep "	;
-								pss = popen( sprintf(sum00, pfps, paramX->nfs ), "r" ) ;
 								short d = -1;
+
+								sprintf(sum00, pfps, paramX->nfs );
+								pss = popen( sum00, "r" ) ;
 								while (d = 2) {
 									break_v = 1;
 									if ( !strcmp(pss,NULL) || !strcmp(pss," ") || !strcmp(pss,"")) d = 1 ;
 									else {
 										d =2 ;
-										system(sprintf(cmd_str ,paramX->bin ,paramX->param )); 
+										sprintf(cmd_str ,paramX->bin ,paramX->param );
+										system (cmd_str); 
 									}
 								}
 								pclose(pss)		;
 							}
 
-
-							if(paramX->onRestart) { /*Restart unit */
+							/* if on RST */
+							if(paramX->onRestart) { 
 								/*
 								 *	onfailure    - if program is crash 
 								 *  sigstop      - if send signal sigstop 
@@ -1416,17 +1423,20 @@ r_xrc(void){
 								break_v == 1;
 								char *cmdp = "ps -eo comm | grep ";
 								
-								if     ( !strcmp(paramX->onRestart,"sigstop"   ) ){
-									system(sprintf(cmd_str ,paramX->bin ,paramX->param ));
-									pss = popen( sprintf(cmd_st2 , cmdp       ,paramX->bin   ),"r");
+								sprintf(cmd_str ,paramX->bin ,paramX->param);
+								sprintf(cmd_st2 , cmdp ,paramX->bin        );
+
+								if  ( !strcmp(paramX->onRestart,"sigstop"   ) ){
+									system(cmd_str);
+									pss = popen( cmd_st2 ,"r");
 									if (  !strcmp(pss, "")) 
 										kill( paramX->pid ,SIGCONT );
 									if (pf) pclose(pss);
 								}
 								else if( !strcmp(paramX->onRestart,"onFailure") ){	
-									pf  = popen( sprintf(cmd_str ,paramX->bin ,paramX->param),"r");
-									pss = popen( sprintf(cmd_st2 , cmdp ,paramX->bin   ), "r" );
-									/* Calls */
+									pf  = popen( cmd_str, "r" );
+									pss = popen( cmd_st2, "r" );
+									/*  Calls  */
 									pet = vfork() ;
 									reg_rst_errn= rst_xrcCall(pet ,path ,pf ,pss ,tmp0res ,cmd_str) ;
 									if (reg_rst_errn= -1){
@@ -1434,8 +1444,9 @@ r_xrc(void){
 									}
 								}	
 							}
+							sprintf(cmd_str ,paramX->bin ,paramX->param); /* noch einmal für UB */
+							if  (break_v == 0) system(cmd_str); 
 							
-							if  (break_v == 0) system(sprintf(cmd_str ,paramX->bin ,paramX->param )); 
 							paramX->rlevel = endLine;
 						}
 					}	
