@@ -1683,34 +1683,34 @@ read_inittab(void) {
 				continue;
 			}
 			INITDBG(L_VB, "Killing \"%s\"", ch->process);
-			if (round == 0 ) {		
-				/* Send TERM signal */
-				if (talk)
-					initlog(L_CO,"Sending processes configured via /etc/inittab the TERM signal");
-				kill(-(ch->pid), SIGTERM);
-				foundOne = 1;
-				/*	See if we have to wait sleep_time seconds */
-				if (foundOne) {
-					for (f = 0; f < 100 * sleep_time; f++){
-						for (ch = family; ch; ch = ch->next){
-							if (!(ch->flags & KILLME)) 							continue;
-							if ((ch->flags & RUNNING) && !(ch->flags & ZOMBIE)) break;
-						}
-						if (ch == NULL) {
-							round = 1;
-							foundOne = 0; 
-							break;
-						}
-						do_msleep(MINI_SLEEP);
-					}
-				}		
-			}
-			else if (round == 1) {	/* Send KILL signal and collect status */
-				if (talk)
-					initlog(L_CO,"Sending processes configured via /etc/inittab the KILL signal");
-				kill(-(ch->pid), SIGKILL);
-			}	talk = 0;
+			switch (round) {	
+				case 0 :	/* Send TERM signal */
+					if (talk) initlog(L_CO,"Sending processes configured via /etc/inittab the TERM signal");
+					kill(-(ch->pid), SIGTERM);
+					foundOne = 1;
+					break;
+				case 1 :	/* Send KILL signal and collect status */
+					if (talk) initlog(L_CO,"Sending processes configured via /etc/inittab the KILL signal");
+					kill(-(ch->pid), SIGKILL);
+					break;
+			}		talk = 0;
 		}
+		
+		/*	See if we have to wait sleep_time seconds */
+		if (foundOne) {
+			for (f = 0; f < 100 * sleep_time; f++){
+				for (ch = family; ch; ch = ch->next){
+					if (!(ch->flags & KILLME)) 							continue;
+					if ((ch->flags & RUNNING) && !(ch->flags & ZOMBIE)) break;
+				}
+				if (ch == NULL) {
+					round = 1;
+					foundOne = 0; 
+					break;
+				}
+				do_msleep(MINI_SLEEP);
+			}
+		}	
 	}
 	/*	Now give all processes the chance to die and collect exit statuses. */
 	if (foundOne)	do_msleep(MINI_SLEEP);
