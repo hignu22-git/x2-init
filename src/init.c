@@ -1290,22 +1290,21 @@ static void check_kernel_console()	{
 #endif
 #if RXRC_ENABLE
 
-
 void* 
-pOpenExt(void* args_p) {
-	/* 
-	 * function need 2 objects in global in file .
-	 * Object 1 "short type_DX" ,Object 2 "char pOpenExt_DX" .
-	 */
+pOpenExt(void* args_p) { /* pThread xrc call */
+	/* function need 2 objects in global in file . Object
+	 * 1 "short type_DX" ,Object 2 "char pOpenExt_DX".  */
 	char* p;
 	while(p=(char*)args_p ){
 		type_DX      = strsep(&p,"-");
 		pOpenExt_DX  = strsep(&p,";");
-		if(p=NULL)              break;
+		if ( p = "-" || p= ";" ) p++ ;
+		if     (p=NULL)         break;
 		else if(!strcmp(p,NULL))break;
 		p++;
 	}
 }
+
 pid_t 
 rst_xrcCall( pid_t pPid ,char* path ,FILE* pf, FILE* pss, char* tmp0res, char* cmd_str){ /* onRestart->onFailure->newPr */
 	xrcParam *paramX ;
@@ -1327,7 +1326,6 @@ rst_xrcCall( pid_t pPid ,char* path ,FILE* pf, FILE* pss, char* tmp0res, char* c
 		exit(1);
 	}	exit(0); 
 }
-
 
 #else
 #endif
