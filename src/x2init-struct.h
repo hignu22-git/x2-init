@@ -2,8 +2,11 @@
 /* Version information */
 char *Version = "@(#) x2-init " VERSION " <hianon228@yandex.fr> ";
 char *bootmsg = "version " VERSION " %s";
+
 #define E_VERSION "INIT_VERSION=x2init-" VERSION
 
+short pOpenExt_DX  ;
+char* type_DX      ;
 char runlevel = 'S';				   /* The current run level */
 char thislevel = 'S';				   /* The current runlevel */
 char prevlevel = 'N';				   /* Previous runlevel */

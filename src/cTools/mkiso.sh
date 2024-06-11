@@ -1,0 +1,12 @@
+mkisofs -o /tmp/slackware-dvd.iso \
+  -R -J -A "Slackware Install" \
+  -hide-rr-moved \
+  -v -d -N \
+  -no-emul-boot -boot-load-size 4 -boot-info-table \
+  -sort isolinux/iso.sort \
+  -b isolinux/isolinux.bin \
+  -c isolinux/isolinux.boot \
+  -eltorito-alt-boot -no-emul-boot -eltorito-platform 0xEF \
+  -eltorito-boot isolinux/efiboot.img \
+  -m 'source' \
+  -V "x2-SlackDVD" .

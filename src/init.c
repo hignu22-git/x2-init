@@ -1291,6 +1291,21 @@ static void check_kernel_console()	{
 #if RXRC_ENABLE
 
 
+void* 
+pOpenExt(void* args_p) {
+	/* 
+	 * function need 2 objects in global in file .
+	 * Object 1 "short type_DX" ,Object 2 "char pOpenExt_DX" .
+	 */
+	char* p;
+	while(p=(char*)args_p ){
+		type_DX      = strsep(&p,"-");
+		pOpenExt_DX  = strsep(&p,";");
+		if(p=NULL)              break;
+		else if(!strcmp(p,NULL))break;
+		p++;
+	}
+}
 pid_t 
 rst_xrcCall( pid_t pPid ,char* path ,FILE* pf, FILE* pss, char* tmp0res, char* cmd_str){ /* onRestart->onFailure->newPr */
 	xrcParam *paramX ;
@@ -1319,7 +1334,6 @@ rst_xrcCall( pid_t pPid ,char* path ,FILE* pf, FILE* pss, char* tmp0res, char* c
 /*		
 	READ xRC-dir
 */
-
 int 
 r_xrc(void){
 #if RXRC_ENABLE
@@ -1341,11 +1355,11 @@ r_xrc(void){
 	char *cmd_st2[1035] ;
 	char **buff         ;
 	short break_v       ;
-
 	char *path ,*tmp0res ;
 	CHILD *ch /*,*old, *i */	; 		/* Pointers to CHILD structure */
 	/*struct sigaction sa ; */
-	pid_t pet            ; 
+	pthread_t pet        ;				/* thread for xrc_d start */
+
 
 	initlog(L_CO,"x2 Start r_Xrc-fn 01  ");
 	if ((tabdir = opendir(XRCD)) == NULL) 
@@ -1356,23 +1370,22 @@ r_xrc(void){
 			{
 				/*
 				 * ignore files not like *.xrc
-				 */		initlog( L_CO ,"x2 open directory in r_xrc " );
-				if (!strcmp(file_entry->d_name, ".") || !strcmp(file_entry->d_name, "..")) 
-					continue;
+				 */		
+				initlog( L_CO ,"open directory in R_XRC." );
+				if (!strcmp(file_entry->d_name, ".") || !strcmp(file_entry->d_name, "..")) continue;
 				if (strlen (file_entry->d_name)  < 5 || 
-					strcmp (file_entry->d_name + strlen(file_entry->d_name) - 4, ".xrc")) 
-					continue;
+					strcmp (file_entry->d_name + strlen(file_entry->d_name) - 4, ".xrc"))  continue;
 				/* 
 				 * initialize filename 
 				 */
 				memset(f_name, 0, sizeof(char) * 272) ;
 				snprintf(f_name, 272, "/etc/xrc.d/%s ", file_entry->d_name);
-				initlog(L_VB, "Reading: %s", f_name) ;
+				initlog(L_VB, "Reading [XRC.D]: %s", f_name) ;
 			
 				if ((fp_x= fopen(f_name ,"r")) == NULL)  		continue ;
 				while (get_string(buf, sizeof(buf), fp_x) ) { 	lineNo++ ;
-					for (p = buf; /* *p == ' ' || *p == '\t'*/ ; p++)    ;
-					if (*p != '#' && *p != '\n') break                   ;
+					for(p = buf;;p++           )                         ;
+					if (*p == '#' && *p == '\n') continue                ;
 					buff[lineNo - 1] = p ;	
 					/* 
 					 * Parser
@@ -1437,11 +1450,9 @@ r_xrc(void){
 									pf  = popen( cmd_str, "r" );
 									pss = popen( cmd_st2, "r" );
 									/*  Calls  */
-									pet = vfork() ;
-									reg_rst_errn= rst_xrcCall(pet ,path ,pf ,pss ,tmp0res ,cmd_str) ;
-									if (reg_rst_errn= -1){
-										initlog(L_VB,"ERROR => xrc->rst->onFailure !!!!");
-									}
+									char* dota ;
+									sprintf(dota, cmd_str,"r");
+									pthread_create(&pet, NULL, pOpenExt,dota );
 								}	
 							}
 							sprintf(cmd_str ,paramX->bin ,paramX->param); /* noch einmal für UB */
@@ -1458,9 +1469,12 @@ r_xrc(void){
 				done = 1;
 				continue;
 			}
-		} else {	done = 1; continue; }
+		} else {	
+			done = 1; continue; 
+		}
 	}				
-#else 
+#else
+	initlog(L_VB ," xrc disabled by build");
 #endif
 	return 0;
 }		
@@ -1707,8 +1721,7 @@ read_inittab(void) {
 					round = 1;
 					foundOne = 0; 
 					break;
-				}
-				do_msleep(MINI_SLEEP);
+				}		do_msleep(MINI_SLEEP);
 			}
 		}	
 	}
@@ -1759,6 +1772,8 @@ read_inittab(void) {
 	}
 #endif
 r_xrc();		}
+
+
 
 /*
  *	Walk through the family list and start up children.
@@ -1888,6 +1903,8 @@ static int get_init_default(void)
 	return lvl;
 }
 
+
+
 /*
  *	We got signaled.
  *
@@ -1990,14 +2007,11 @@ static int read_level(int arg)
 
 		/* Read inittab again first! */
 		read_inittab();
-		/* Read xrc.d now */
-		r_xrc();
-
+		
 		/* Mark those special tasks */
 		for (ch = family; ch; ch = ch->next)
 			if (strchr(ch->rlevel, foo) != NULL ||
-				strchr(ch->rlevel, tolower(foo)) != NULL)
-			{
+				strchr(ch->rlevel, tolower(foo)) != NULL) {
 				ch->flags |= DEMAND;
 				ch->flags &= ~XECUTED;
 				INITDBG(L_VB,
