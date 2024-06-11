@@ -1298,8 +1298,8 @@ pOpenExt(void* args_p) { /* pThread xrc call */
 	while(p=(char*)args_p ){
 		type_DX      = strsep(&p,"-");
 		pOpenExt_DX  = strsep(&p,";");
-		if ( p = "-" || p= ";" ) p++ ;
-		if     (p=NULL)         break;
+		if ( p =="-" || p==";" ) p++ ;
+		if     (p==NULL)        break;
 		else if(!strcmp(p,NULL))break;
 		p++;
 	}
