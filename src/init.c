@@ -1305,26 +1305,20 @@ pOpenExt(void* args_p) { /* pThread xrc call */
 	}
 }
 
-pid_t 
-rst_xrcCall( pid_t pPid ,char* path ,FILE* pf, FILE* pss, char* tmp0res, char* cmd_str){ /* onRestart->onFailure->newPr */
-	xrcParam *paramX ;
-
-	if (pPid == 0){   /* Done . */
-		while (get_string ( path, sizeof(path), pss )) { strcat(tmp0res, path); }
-		
-		if ( !strcmp(tmp0res ,"")) {		
-			pclose(pf);		
-			pf  = popen( cmd_str,"r");					
-		}
-								
-		if (( pss || pf ) || ( pss && pf )) {
-			pclose(pss);
-			pclose(pf );
-		}
+short
+processingForRXRC(pid_t pidForVp ,char *cmd_str)
+{
+	xrcParam *px;
+	short check = 0 ;
+	pid_t localPid ;
+	switch(localPid){
+	case 0 :
+		pidForVp = getpid();
+		execl(px->bin,cmd_str,0);  
+	default :
+		initlog(L_VB,"passed control xrc=>conf=>rst ",pidForVp);
 	}
-	else if(pPid == -1){
-		exit(1);
-	}	exit(0); 
+	return 0;
 }
 
 #else
@@ -1332,13 +1326,11 @@ rst_xrcCall( pid_t pPid ,char* path ,FILE* pf, FILE* pss, char* tmp0res, char* c
 /*		
 	READ xRC-dir
 */
-int 
-r_xrc(void){
+int r_xrc(void){
 #if RXRC_ENABLE
 
 	FILE* pf,*fp_x  	;
 	FILE* pss2, *pss	;
-	
 	pid_t reg_rst_errn  ;
 	char  buf [256]   	;
 	DIR*  tabdir		;
@@ -1349,19 +1341,18 @@ r_xrc(void){
 	char *mainSEP ,endLine ; 	/* setarators */
 	char f_name[272]	;		/* size d_name + strlen /etc/rc.d/ */
 	xrcParam  *paramX   ;
-	char *cmd_str[1035] ;
+	char *cmd_str       ;
 	char *cmd_st2[1035] ;
 	char **buff         ;
-	short break_v       ;
-	char *path ,*tmp0res ;
-	CHILD *ch /*,*old, *i */	; 		/* Pointers to CHILD structure */
-	/*struct sigaction sa ; */
-	pthread_t pet        ;				/* thread for xrc_d start */
-
+	CHILD *ch           ;       /*,*old, *i */	
+	/* For processing 
+	 * (with pipes) */
+	pid_t pidForVp      ;
+	short vProcForRXRC  ;
+	int   fd[2]         ;
 
 	initlog(L_CO,"x2 Start r_Xrc-fn 01  ");
-	if ((tabdir = opendir(XRCD)) == NULL) 
-		/*w_journal2x(L_XI,J1_INIT,J2_ERROR,"xrc.d is not found !" );*/
+	/* if ((tabdir = opendir(XRCD)) == NULL) w_journal2x(L_XI,J1_INIT,J2_ERROR,"xrc.d is not found !" );*/
 	while(done!=1)	{					/*	reading files in buffer	*/
 		if(tabdir != NULL) {
 			if((file_entry = readdir(tabdir)) != NULL) 
@@ -1380,99 +1371,56 @@ r_xrc(void){
 				snprintf(f_name, 272, "/etc/xrc.d/%s ", file_entry->d_name);
 				initlog(L_VB, "Reading [XRC.D]: %s", f_name) ;
 			
-				if ((fp_x= fopen(f_name ,"r")) == NULL)  		continue ;
-				while (get_string(buf, sizeof(buf), fp_x) ) { 	lineNo++ ;
-					for(p = buf;;p++           )                         ;
-					if (*p == '#' && *p == '\n') continue                ;
-					buff[lineNo - 1] = p ;	
-					/* 
+				if ((fp_x= fopen(f_name ,"r")) == NULL)  	   continue ;
+				while (get_string(buf, sizeof(buf), fp_x) ) { 	p = buf ;
+					lineNo++;p++;		/* nota--   p - pointer if*+str*/
+					if (*p == '#' && *p == '\n')continue                ;
+					/* buff[lineNo - 1] = p ;	*/ /* 
 					 * Parser
 					 * Type => [Variable(mainSEP) ] : [State(endLine) ] ; \n 
 					 */
 					mainSEP = strsep(&p,":");
 					endLine = strsep(&p,";");
-					if(!strcmp(mainSEP, "BIN")) {
+					/* SET-S: */
+					if(!strcmp(mainSEP, "BIN")) {					/* BINARY FILE */
 						paramX->bin = endLine ;
-					} else if(!strcmp(mainSEP, "PARAM")) {	 
+					} else if(!strcmp(mainSEP, "PARAM")) {			/* PARAM. FOR 1 ENTRY */
 						sprintf(paramX->param , " " ,endLine);
-					} else if (!strcmp(mainSEP, "NEED-FOR-START")) { /* for exec unit with N program.  */
-						paramX->nfs = endLine ;
-					}else if (!strcmp(mainSEP, "CONSOLE-STAT")) {  /* mode for unit restart */
-						if (strcmp(endLine, "")) {
-							paramX->wait_rt = (int*)endLine ;
-						}
-					} else if(!strcmp(mainSEP, "RESTART-ON") ){
+					} else if (!strcmp(mainSEP, "NUM-SET-IS")) {    /* NUMBER OF START */
+						paramX->nfs = (int*)endLine ;
+					} else if(!strcmp(mainSEP, "RESTART-ON") ){     /* SET FOR RESTART */
 						paramX->onRestart = endLine ;
-					} else if(!strcmp(mainSEP, "TARGET")) {  /*This is a final argument in end file */
-						if (!strcmp(endLine, ch->rlevel)) 
-						{	
-						    if (paramX->nfs) {
-								char *sum00 ;
-								char *pfps = "ps -eo comm  | grep "	;
-								short d = -1;
-
-								sprintf(sum00, pfps, paramX->nfs );
-								pss = popen( sum00, "r" ) ;
-								while (d = 2) {
-									break_v = 1;
-									if ( !strcmp(pss,NULL) || !strcmp(pss," ") || !strcmp(pss,"")) d = 1 ;
-									else {
-										d =2 ;
-										sprintf(cmd_str ,paramX->bin ,paramX->param );
-										system (cmd_str); 
-									}
-								}
-								pclose(pss)		;
-							}
-
-							/* if on RST */
-							if(paramX->onRestart) { 
-								/*
-								 *	onfailure    - if program is crash 
-								 *  sigstop      - if send signal sigstop 
-								 */
-								break_v == 1;
-								char *cmdp = "ps -eo comm | grep ";
-								
-								sprintf(cmd_str ,paramX->bin ,paramX->param);
-								sprintf(cmd_st2 , cmdp ,paramX->bin        );
-
-								if  ( !strcmp(paramX->onRestart,"sigstop"   ) ){
-									system(cmd_str);
-									pss = popen( cmd_st2 ,"r");
-									if (  !strcmp(pss, "")) 
-										kill( paramX->pid ,SIGCONT );
-									if (pf) pclose(pss);
-								}
-								else if( !strcmp(paramX->onRestart,"onFailure") ){	
-									pf  = popen( cmd_str, "r" );
-									pss = popen( cmd_st2, "r" );
-									/*  Calls  */
-									char* dota ;
-									sprintf(dota, cmd_str,"r");
-									pthread_create(&pet, NULL, pOpenExt,dota );
-								}	
-							}
-							sprintf(cmd_str ,paramX->bin ,paramX->param); /* noch einmal für UB */
-							if  (break_v == 0) system(cmd_str); 
-							
-							paramX->rlevel = endLine;
-						}
-					}	
-				}	
-				if (strlen(p) == 0) continue;									
-				if (fp_x)			fclose(fp_x);	
+					} else if(!strcmp(mainSEP, "TARGET")) {  /*This is a final argument in end file , */
+						paramX->target = endLine; break;
+					} /* End writeing to paramX-struct */
+				}	/* ... PROCESSING */ 
+				initlog(L_VB, "Processing..step1..");
+				if((paramX->bin && paramX->nfs && paramX->onRestart) != NULL) {			
+					sprintf(cmd_str ,paramX->bin ,paramX->param);
+					initlog(L_VB,"Processing..step2..")
+					if (!strcmp(paramX->onRestart,"RST")){
+						vProcForRXRC = processingForRXRC(pidForVp ,cmd_str);
+						if (vProcForRXRC =1) kill(pidForVp ,SIGKILL);
+						waitpid(pidForVp ,NULL ,0);    /*HuZn  !!!!*/
+					}	/* Start Clean */
+					else if(!strcmp(paramX->onRestart,NULL) || paramX->onRestart 
+							|| !strcmp(paramX->onRestart,"def")) {
+						system(cmd_str);
+					}
+					
+					/* End   */
+					if (strlen(p) == 0) continue;									
+					if (fp_x)			fclose(fp_x);
+				}
 			} else {   
 				if (tabdir) closedir(tabdir);
 				done = 1;
 				continue;
 			}
-		} else {	
-			done = 1; continue; 
 		}
 	}				
 #else
-	initlog(L_VB ," xrc disabled by build");
+	initlog(L_VB ,"XRC DISABLE BY BUILD");
 #endif
 	return 0;
 }		

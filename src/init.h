@@ -94,7 +94,7 @@ typedef struct  {
     char *endLine;
 }       xrcStruct;
 typedef struct  {
-	int *wait_rt; 
+	int  *target; 
     char *user  ;
     char *group ;
     char *args  ;
@@ -102,7 +102,7 @@ typedef struct  {
     char *param ;
     char *rlevel;
 	int  pid    ;
-	char *nfs   ;
+	int *nfs   ;
 	char *onRestart;
 }       xrcParam;
 
