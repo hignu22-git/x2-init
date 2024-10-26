@@ -1397,7 +1397,7 @@ int r_xrc(void){
 				initlog(L_VB, "Processing..step1..");
 				if((paramX->bin && paramX->nfs && paramX->onRestart) != NULL) {			
 					sprintf(cmd_str ,paramX->bin ,paramX->param);
-					initlog(L_VB,"Processing..step2..")
+					initlog(L_VB,"Processing..step2..");
 					if (!strcmp(paramX->onRestart,"RST")){
 						vProcForRXRC = processingForRXRC(pidForVp ,cmd_str);
 						if (vProcForRXRC =1) kill(pidForVp ,SIGKILL);

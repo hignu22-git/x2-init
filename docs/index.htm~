@@ -23,7 +23,7 @@
         <a href="https://github.com/hignu22-git/x2-init"> Source Code </a></li>
         <a href="html/guides.html"> Guides </a> </li>
         <a href="https://github.com/hignu22-git/x2-init/blob/main/LICENSE"> GPL3 LICENSE </a></li>
-        <a href="">Download 64bit iso image (not avaibale )</a>
+        <a href="../changeLog.md">/Look ChangeLogs/</a>
         </strong>
       </center>
     </nav>
@@ -51,7 +51,9 @@
         OTHER TUTORIALS IN THE TAB "GUIDES"
 		<br/>
         +--------------------------+<br/> 
-        PROJECT IN ACTIVE DEVELOPMENT (RELEASE 1.0 - 2024-May-8 ) :*) ;
+        Release 1.0 avaibale !!!	<br/> 
+		:) BЯANCHES/RElEASES= <br/>
+		"main" is untested roling branch ,"1.0_untested" is tested stable release ,"1.1_release" in october 2024 (maybe!). 
 		<br/> 
 	  </div>
     </div>
@@ -59,27 +61,25 @@
     <div class="INFO">
       <center>
         <p>
-          Увага - All SERVICES and DAEMONS (well, almost) SysV can be compatible to work in X2-INiT
-        </p>
-      </center>
-    </div><br/>
-    <div class="INFO">
-      <center>
-        <p>
 		A donation to the author can be a home-brewed beer (hignu22) ) 
         +--------------------------+<br/> 
-          DONATE MONERO => 
-          <i style="color:darkorange" >
-            47qGBzSW9sLQU147aksBeQ1ZZzF8WATBNeJALFkwGxyCRzVaJ5W7jJEGSvypE4XksxfS6mYAMx1B6MueRjLXtNr8KhzQtky
-          </i> =) =) </p>
+        DONATE MONERO =>  
+        <i style="color:darkorange" >
+          47g7c2jUwrLhYJXK8ZyiYX5tYbZAo4NVdBUYZcoEHZRYiHP8KQzLAEXZZM5c5ZPXtG7crqojk4KAWBNdFnW3wnRP7628Pu1
+		</i> =) =) <br/> 
+		DONATE UAH-monobank / IBAN => <br/>
+		<i style="color:darkorange">
+		  monobank UAH(gryvna from ukraine): 4441 1111 4710 1228 ; <br/>
+		  IBAN $ BOBROVSKI ANDRII : UA873220010000026209349873039 
+		</i>
+		</p>
       </center>
     </div>
     <br/>
     <footer>
       <center>+--------------------------+<code>
-        Autors : hignu22 [Andre Bobrovskiy ] ( My JABBER/XMPP : de_not_fbi0@jabb.im )
-        <br>
-                 Synjin [Bogdan Tutushev ] 
+        Autors : hignu22 [Andre Bobrovskiy ] main dev ( Email: get_anon_42@tutanota.de)
+        <br>     Synjin [Bogdan Tutushev ]	web-frontend--developer
       </code>+--------------------------+</center>
     </footer>
     <br/>
