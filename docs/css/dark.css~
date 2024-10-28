@@ -7,7 +7,7 @@ header{
     background-color: #000 ;
     border:3px dashed #fefefe; 
     box-shadow: 0 0 10px rgba(216, 217, 215 , 0.4);
-	color : #74ffff ;
+	color : #2dff99 ;
 }
 
 nav{

@@ -15,7 +15,7 @@ function applyTheme(themeName){
 let activeTheme = localStorage.getItem('theme');
 
 if(activeTheme === null) {
-    applyTheme('light');
+    applyTheme('dark');
 }else {
     applyTheme(activeTheme);
 }
