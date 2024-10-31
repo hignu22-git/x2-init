@@ -1306,7 +1306,10 @@ pOpenExt(void* args_p) { /* pThread xrc call */
 }
 
 short
-processingForRXRC(pid_t pidForVp ,char *cmd_str)
+processingForRXRC(int pidStatusWCONT , /* status for waitpid(... ,WCONTINUED) */
+					pid_t pidForVp   , /* pid for this function */
+					char *cmd_str      /* cmd */
+					)	
 {
 	xrcParam *px;
 	short check = 0 ;
@@ -1317,6 +1320,10 @@ processingForRXRC(pid_t pidForVp ,char *cmd_str)
 		execl(px->bin,cmd_str,0);  
 	default :
 		initlog(L_VB,"passed control xrc=>conf=>rst ",pidForVp);
+		if (WIFSTOPED(pidStatusWCONT)) {
+			initlog(L_VB, "xrc=>conf=>rst proccess=%d !!SIGSTOP passed control WCONTINUED=statusWCONT!!",pidForVp);
+			kill(pidForVp,SIGCONT);
+		}
 	}
 	return 0;
 }
@@ -1345,12 +1352,13 @@ int r_xrc(void){
 	char *cmd_st2[1035] ;
 	char **buff         ;
 	CHILD *ch           ;       /*,*old, *i */	
+	
 	/* For processing 
 	 * (with pipes) */
 	pid_t pidForVp      ;
-	short vProcForRXRC  ;
-	int   fd[2]         ;
-
+	short vProcForRXRC  ;	
+    int statusWCONT     ;
+	
 	initlog(L_CO,"x2 Start r_Xrc-fn 01  ");
 	/* if ((tabdir = opendir(XRCD)) == NULL) w_journal2x(L_XI,J1_INIT,J2_ERROR,"xrc.d is not found !" );*/
 	while(done!=1)	{					/*	reading files in buffer	*/
@@ -1397,11 +1405,11 @@ int r_xrc(void){
 				initlog(L_VB, "Processing..step1..");
 				if((paramX->bin && paramX->nfs && paramX->onRestart) != NULL) {			
 					sprintf(cmd_str ,paramX->bin ,paramX->param);
-					initlog(L_VB,"Processing..step2..")
+					initlog(L_VB,"Processing..step2..");
 					if (!strcmp(paramX->onRestart,"RST")){
-						vProcForRXRC = processingForRXRC(pidForVp ,cmd_str);
+						vProcForRXRC = processingForRXRC(statusWCONT ,pidForVp ,cmd_str);
 						if (vProcForRXRC =1) kill(pidForVp ,SIGKILL);
-						waitpid(pidForVp ,NULL ,0);    /*HuZn  !!!!*/
+						waitpid (pidForVp ,&statusWCONT ,WCONTINUED);    /*HuZn  !!!!*/
 					}	/* Start Clean */
 					else if(!strcmp(paramX->onRestart,NULL) || paramX->onRestart 
 							|| !strcmp(paramX->onRestart,"def")) {
