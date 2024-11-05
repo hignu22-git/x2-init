@@ -1290,21 +1290,6 @@ static void check_kernel_console()	{
 #endif
 #if RXRC_ENABLE
 
-void* 
-pOpenExt(void* args_p) { /* pThread xrc call */
-	/* function need 2 objects in global in file . Object
-	 * 1 "short type_DX" ,Object 2 "char pOpenExt_DX".  */
-	char* p;
-	while(p=(char*)args_p ){
-		type_DX      = strsep(&p,"-");
-		pOpenExt_DX  = strsep(&p,";");
-		if ( p =="-" || p==";" ) p++ ;
-		if     (p==NULL)        break;
-		else if(!strcmp(p,NULL))break;
-		p++;
-	}
-}
-
 short
 processingForRXRC(int pidStatusWCONT , /* status for waitpid(... ,WCONTINUED) */
 					pid_t pidForVp   , /* pid for this function */
@@ -1375,7 +1360,7 @@ int r_xrc(void){
 				/* 
 				 * initialize filename 
 				 */
-				memset(f_name, 0, sizeof(char) * 272) ;
+				memset(f_name, 0, sizeof(char) * 272) ; /* fill "char * 272" in memory area "f_name" - 0 */
 				snprintf(f_name, 272, "/etc/xrc.d/%s ", file_entry->d_name);
 				initlog(L_VB, "Reading [XRC.D]: %s", f_name) ;
 			
@@ -1391,32 +1376,29 @@ int r_xrc(void){
 					endLine = strsep(&p,";");
 					/* SET-S: */
 					if(!strcmp(mainSEP, "BIN")) {					/* BINARY FILE */
-						paramX->bin = endLine ;
+						sprintf(paramX->bin,endLine,NULL);
 					} else if(!strcmp(mainSEP, "PARAM")) {			/* PARAM. FOR 1 ENTRY */
 						sprintf(paramX->param , " " ,endLine);
 					} else if (!strcmp(mainSEP, "NUM-SET-IS")) {    /* NUMBER OF START */
 						paramX->nfs = (int*)endLine ;
 					} else if(!strcmp(mainSEP, "RESTART-ON") ){     /* SET FOR RESTART */
-						paramX->onRestart = endLine ;
-					} else if(!strcmp(mainSEP, "TARGET")) {  /*This is a final argument in end file , */
-						paramX->target = endLine; break;
-					} /* End writeing to paramX-struct */
+						sprintf(paramX->onRestart,endLine,NULL);
+					} 
+					/* End writeing to paramX-struct */
 				}	/* ... PROCESSING */ 
 				initlog(L_VB, "Processing..step1..");
-				if((paramX->bin && paramX->nfs && paramX->onRestart) != NULL) {			
-					sprintf(cmd_str ,paramX->bin ,paramX->param);
+				if(strcmp(paramX->bin,NULL)) { 
+					sprintf(cmd_str ,paramX->bin ,paramX->param); /*make full command with arg-s for start deamon */
 					initlog(L_VB,"Processing..step2..");
-					if (!strcmp(paramX->onRestart,"RST")){
+					if (!strcmp(paramX->onRestart,"RST")){ initlog(L_VB, "Processing..step3..(if RST)");
 						vProcForRXRC = processingForRXRC(statusWCONT ,pidForVp ,cmd_str);
 						if (vProcForRXRC =1) kill(pidForVp ,SIGKILL);
 						waitpid (pidForVp ,&statusWCONT ,WCONTINUED);    /*HuZn  !!!!*/
-					}	/* Start Clean */
-					else if(!strcmp(paramX->onRestart,NULL) || paramX->onRestart 
-							|| !strcmp(paramX->onRestart,"def")) {
+					}	/* Start Clean */	
+					else if(!strcmp(paramX->onRestart,NULL) || !strcmp(paramX->onRestart,"DEF")){ 
+						initlog(L_VB, "Processing..step3..(DEF)");
 						system(cmd_str);
-					}
-					
-					/* End   */
+					}	/* End   */
 					if (strlen(p) == 0) continue;									
 					if (fp_x)			fclose(fp_x);
 				}
